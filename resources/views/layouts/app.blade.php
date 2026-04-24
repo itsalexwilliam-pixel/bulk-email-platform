@@ -1,51 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Bulk Mailer') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    boxShadow: {
+                        soft: '0 10px 30px rgba(2, 6, 23, 0.06)',
+                    }
+                }
+            }
+        };
+    </script>
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('dashboard') }}">Bulk Mailer</a>
-        <div class="collapse navbar-collapse show">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('contacts.*') ? 'active' : '' }}" href="{{ route('contacts.index') }}">Contacts</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('groups.*') ? 'active' : '' }}" href="{{ route('groups.index') }}">Groups</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('import.*') ? 'active' : '' }}" href="{{ route('import.index') }}">Import CSV</a>
-                </li>
-            </ul>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-            </form>
-        </div>
+<body class="h-full bg-slate-50 text-slate-700 dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
+<div class="min-h-screen">
+    <x-saas-sidebar />
+
+    <div id="app-shell" class="lg:pl-72 transition-all duration-300">
+        <x-saas-navbar />
+
+        <main class="px-4 sm:px-6 py-6">
+            @if(session('success'))
+                <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-300">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-300">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-4 py-3 text-sm dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-300">
+                    <ul class="list-disc pl-5 space-y-1">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @yield('content')
+        </main>
     </div>
-</nav>
-
-<div class="container py-4">
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    @yield('content')
 </div>
+
+<div id="toastContainer" class="fixed top-4 right-4 z-[60] space-y-2"></div>
+
+<script>
+(function () {
+    const root = document.documentElement;
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.classList.add('dark');
+    } else {
+        root.classList.remove('dark');
+    }
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function () {
+            root.classList.toggle('dark');
+            localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+        });
+    }
+
+    const sidebar = document.getElementById('saas-sidebar');
+    const mobileToggle = document.getElementById('mobileSidebarToggle');
+    const desktopCollapse = document.getElementById('sidebarCollapseBtn');
+    const appShell = document.getElementById('app-shell');
+
+    function closeMobileSidebar() {
+        if (window.innerWidth < 1024) {
+            sidebar?.classList.add('-translate-x-full');
+        }
+    }
+
+    if (window.innerWidth < 1024) {
+        sidebar?.classList.add('-translate-x-full');
+    }
+
+    mobileToggle?.addEventListener('click', () => {
+        sidebar?.classList.toggle('-translate-x-full');
+    });
+
+    desktopCollapse?.addEventListener('click', () => {
+        const collapsed = sidebar?.classList.toggle('lg:w-20');
+        if (collapsed) {
+            appShell?.classList.remove('lg:pl-72');
+            appShell?.classList.add('lg:pl-20');
+        } else {
+            appShell?.classList.add('lg:pl-72');
+            appShell?.classList.remove('lg:pl-20');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth < 1024 && sidebar && mobileToggle) {
+            if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                closeMobileSidebar();
+            }
+        }
+    });
+
+    document.querySelectorAll('form').forEach((form) => {
+        form.addEventListener('submit', function () {
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.dataset.originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                btn.innerHTML = 'Processing...';
+            }
+        });
+    });
+})();
+</script>
+@stack('scripts')
 </body>
 </html>

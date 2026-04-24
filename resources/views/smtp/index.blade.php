@@ -1,130 +1,126 @@
 @extends('layouts.app')
 
+@section('page_title', 'SMTP / Sending')
+
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0">SMTP Servers</h3>
+@php
+    $totalServers = $servers->total();
+    $activeServers = $servers->where('is_active', 1)->count();
+@endphp
+
+<div class="space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <x-saas-stat-card title="Total Servers" :value="$totalServers" />
+        <x-saas-stat-card title="Active" :value="$activeServers" />
+        <x-saas-stat-card title="Inactive" :value="max($totalServers - $activeServers, 0)" />
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Add SMTP Server</h2>
         </div>
-    @endif
 
-    <div class="card mb-4">
-        <div class="card-header">Add SMTP Server</div>
-        <div class="card-body">
-            <form method="POST" action="{{ route('smtp.store') }}">
-                @csrf
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Host</label>
-                        <input type="text" name="host" class="form-control" value="{{ old('host') }}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Port</label>
-                        <input type="number" name="port" class="form-control" value="{{ old('port', 587) }}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Encryption</label>
-                        <select name="encryption" class="form-select" required>
-                            <option value="tls" @selected(old('encryption') === 'tls')>TLS</option>
-                            <option value="ssl" @selected(old('encryption') === 'ssl')>SSL</option>
-                            <option value="none" @selected(old('encryption') === 'none')>None</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" value="{{ old('username') }}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">From Name</label>
-                        <input type="text" name="from_name" class="form-control" value="{{ old('from_name') }}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">From Email</label>
-                        <input type="email" name="from_email" class="form-control" value="{{ old('from_email') }}" required>
-                    </div>
+        <form method="POST" action="{{ route('smtp.store') }}" class="space-y-4">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Name</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
                 </div>
-                <div class="mt-3">
-                    <button class="btn btn-primary">Save SMTP Server</button>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Host</label>
+                    <input type="text" name="host" value="{{ old('host') }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
                 </div>
-            </form>
-        </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Port</label>
+                    <input type="number" name="port" value="{{ old('port', 587) }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Encryption</label>
+                    <select name="encryption" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                        <option value="tls" @selected(old('encryption') === 'tls')>TLS</option>
+                        <option value="ssl" @selected(old('encryption') === 'ssl')>SSL</option>
+                        <option value="none" @selected(old('encryption') === 'none')>None</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Username</label>
+                    <input type="text" name="username" value="{{ old('username') }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">Password</label>
+                    <input type="password" name="password" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">From Name</label>
+                    <input type="text" name="from_name" value="{{ old('from_name') }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm mb-1 text-slate-700 dark:text-slate-300">From Email</label>
+                    <input type="email" name="from_email" value="{{ old('from_email') }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm">
+                </div>
+            </div>
+
+            <button class="inline-flex items-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
+                Save SMTP Server
+            </button>
+        </form>
     </div>
 
-    <div class="card">
-        <div class="card-header">Configured Servers</div>
-        <div class="table-responsive">
-            <table class="table table-striped mb-0">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Host</th>
-                        <th>Port</th>
-                        <th>Username</th>
-                        <th>From</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($servers as $server)
-                        <tr>
-                            <td>{{ $server->name }}</td>
-                            <td>{{ $server->host }}</td>
-                            <td>{{ $server->port }}</td>
-                            <td>{{ $server->username }}</td>
-                            <td>{{ $server->from_name }} <{{ $server->from_email }}></td>
-                            <td>
-                                <span class="badge {{ $server->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ $server->is_active ? 'Active' : 'Inactive' }}
+    <div>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">Configured Servers</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @forelse($servers as $server)
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h4 class="text-base font-semibold text-slate-900 dark:text-white">{{ $server->name }}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $server->host }}:{{ $server->port }} • {{ strtoupper($server->encryption) }}</p>
+                        </div>
+                        <span class="inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full {{ $server->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
+                            <span class="w-2 h-2 rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
+                            {{ $server->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+
+                    <div class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-1">
+                        <p><span class="text-slate-400">Username:</span> {{ $server->username }}</p>
+                        <p><span class="text-slate-400">From:</span> {{ $server->from_name }} <{{ $server->from_email }}></p>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <a href="{{ route('smtp.edit', $server) }}" class="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition">
+                            Edit
+                        </a>
+
+                        <form action="{{ route('smtp.toggle', $server) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                <span class="relative inline-flex h-4 w-8 items-center rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}">
+                                    <span class="inline-block h-3 w-3 transform rounded-full bg-white transition {{ $server->is_active ? 'translate-x-4' : 'translate-x-1' }}"></span>
                                 </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="{{ route('smtp.edit', $server) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                <form action="{{ route('smtp.toggle', $server) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="btn btn-sm btn-outline-warning">
-                                        {{ $server->is_active ? 'Deactivate' : 'Activate' }}
-                                    </button>
-                                </form>
-                                <form action="{{ route('smtp.destroy', $server) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this SMTP server?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-4">No SMTP servers configured.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="card-body">
-            {{ $servers->links() }}
+                                {{ $server->is_active ? 'Deactivate' : 'Activate' }}
+                            </button>
+                        </form>
+
+                        <form action="{{ route('smtp.destroy', $server) }}" method="POST" onsubmit="return confirm('Delete this SMTP server?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-xs font-medium hover:bg-rose-200 transition">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500">
+                    No SMTP servers configured.
+                </div>
+            @endforelse
         </div>
     </div>
+
+    <div>{{ $servers->links() }}</div>
 </div>
 @endsection
