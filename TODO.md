@@ -1,8 +1,9 @@
-# TODO - Reports/Settings/Sending Live Fix
+# TODO - Full Working Condition Fix
 
-- [x] Add missing reports route in `routes/web.php`
-- [x] Update `SendController` status transition logic for live sending
-- [x] Verify and fix `WorkMailsQueueCommand` pending queue processing
-- [x] Verify scheduler registration for worker command (Kernel/console routes)
-- [x] Verify and fix settings/profile page wiring
-- [x] Run critical verification for reports tab, settings tab, and send flow
+- [ ] Add real settings persistence layer (migration + model)
+- [ ] Add SettingsController and settings view
+- [ ] Wire `/settings` routes and update sidebar settings link
+- [ ] Improve queue worker to auto-complete campaign status transitions
+- [ ] Validate send flow and scheduler execution
+- [ ] Run focused tests for settings + sending flow
+- [ ] Push latest fixes and provide pull/deploy commands
