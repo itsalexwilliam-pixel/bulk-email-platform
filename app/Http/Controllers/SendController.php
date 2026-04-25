@@ -30,7 +30,9 @@ class SendController extends Controller
             }
         }
 
-        $campaign->update(['status' => 'queued']);
+        // campaigns.status enum does not include 'queued' in current schema
+        // use 'scheduled' to represent queued-for-sending state safely
+        $campaign->update(['status' => 'scheduled']);
 
         return redirect()->route('campaigns.index')
             ->with('success', "Queued {$inserted} email(s) for sending.");
