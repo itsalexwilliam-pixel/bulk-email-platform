@@ -113,25 +113,31 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.tiny.cloud/1/{{ config('services.tinymce.api_key', 'no-api-key') }}/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    tinymce.init({
-        selector: '#body-editor',
-        height: 360,
-        menubar: true,
-        branding: false,
-        promotion: false,
-        plugins: 'lists link image table code preview',
-        toolbar: 'undo redo | formatselect | bold italic underline | bullist numlist | link table | code preview'
-    });
+    const bodyEditor = document.getElementById('body-editor');
+    bodyEditor?.classList.add(
+        'w-full',
+        'rounded-xl',
+        'border',
+        'border-slate-300',
+        'dark:border-slate-700',
+        'bg-white',
+        'dark:bg-slate-950',
+        'px-4',
+        'py-3',
+        'text-sm',
+        'focus:outline-none',
+        'focus:ring-2',
+        'focus:ring-indigo-500'
+    );
 
     const previewBtn = document.getElementById('previewBtn');
     const previewWrapper = document.getElementById('previewWrapper');
     const previewBody = document.getElementById('previewBody');
 
     previewBtn?.addEventListener('click', function () {
-        const html = tinymce.get('body-editor') ? tinymce.get('body-editor').getContent() : '';
-        previewBody.innerHTML = html;
+        const raw = bodyEditor ? bodyEditor.value : '';
+        previewBody.innerHTML = raw;
         previewWrapper.classList.remove('hidden');
     });
 </script>
