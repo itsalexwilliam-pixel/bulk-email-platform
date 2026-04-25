@@ -52,6 +52,16 @@
                             <td class="py-3 px-4">{{ $campaign->contacts_count }}</td>
                             <td class="py-3 px-4">
                                 <div class="flex items-center justify-end gap-2">
+                                    @if(in_array($campaign->status, ['draft', 'scheduled']))
+                                        <form action="{{ route('campaigns.send', $campaign) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium hover:bg-emerald-200 transition"
+                                                    onclick="return confirm('Start sending this campaign now?')">
+                                                Start Sending
+                                            </button>
+                                        </form>
+                                    @endif
                                     <a href="{{ route('campaigns.edit', $campaign) }}"
                                        class="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition">
                                         Edit

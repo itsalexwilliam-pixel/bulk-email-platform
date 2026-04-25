@@ -78,18 +78,25 @@
     </div>
 </div>
 
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    tinymce.init({
-        selector: '#body-editor',
-        height: 320,
-        menubar: true,
-        plugins: 'lists link image table code preview',
-        toolbar: 'undo redo | formatselect | bold italic underline | bullist numlist | link table | code preview'
-    });
+    document.getElementById('body-editor')?.classList.add(
+        'w-full',
+        'rounded-xl',
+        'border',
+        'border-slate-300',
+        'dark:border-slate-700',
+        'bg-white',
+        'dark:bg-slate-950',
+        'px-4',
+        'py-3',
+        'text-sm',
+        'focus:outline-none',
+        'focus:ring-2',
+        'focus:ring-indigo-500'
+    );
 
     function previewEmail() {
-        const html = tinymce.get('body-editor') ? tinymce.get('body-editor').getContent() : '';
+        const html = document.getElementById('body-editor')?.value || '';
         document.getElementById('previewBody').innerHTML = html;
     }
 </script>
