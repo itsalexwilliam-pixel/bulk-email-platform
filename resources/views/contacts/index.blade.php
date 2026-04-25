@@ -21,9 +21,21 @@
                 <h2 class="text-lg font-semibold text-slate-900 dark:text-white mr-2">Contacts</h2>
                 <span class="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ $totalContacts }} total</span>
             </div>
-            <a href="{{ route('contacts.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
-                Add Contact
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('import.index') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
+                    Import CSV
+                </a>
+                <a href="{{ route('groups.index') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-slate-700 text-white text-sm font-medium hover:bg-slate-800 transition">
+                    Manage Lists (Groups)
+                </a>
+                <a href="{{ route('contacts.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Add Contact
+                </a>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-800 dark:text-indigo-200">
+            Recommended flow: <span class="font-semibold">Create a List → Import contacts → Send campaign to the List.</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">

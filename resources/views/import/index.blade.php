@@ -42,18 +42,28 @@
                 </div>
             </div>
 
+            <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 px-4 py-3 text-sm text-indigo-800 dark:text-indigo-200">
+                Contacts will be added to selected <span class="font-semibold">Lists (Groups)</span>.
+                <div class="mt-1 text-xs">
+                    CSV format example:
+                    <code class="px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-900/70">name,email</code>
+                    <code class="px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-900/70">John Doe,john@example.com</code>
+                </div>
+            </div>
+
             <div>
-                <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Assign to Groups (optional)</label>
-                <select name="groups[]" multiple size="8"
+                <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Assign to Lists (Groups) <span class="text-rose-600">*</span></label>
+                <select id="groupsSelect" name="groups[]" multiple size="8" required
                         class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     @foreach($groups as $group)
                         <option value="{{ $group->id }}">{{ $group->name }}</option>
                     @endforeach
                 </select>
+                <p id="groupSelectionHint" class="mt-1 text-xs text-rose-600">Please select at least one List (Group) to enable import.</p>
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
+                <button id="importSubmitBtn" type="submit" disabled class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Import
                 </button>
                 <a href="{{ route('contacts.index') }}"
@@ -65,3 +75,31 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const groupsSelect = document.getElementById('groupsSelect');
+    const importSubmitBtn = document.getElementById('importSubmitBtn');
+    const groupSelectionHint = document.getElementById('groupSelectionHint');
+
+    function refreshImportButtonState() {
+        const selectedCount = groupsSelect ? Array.from(groupsSelect.selectedOptions).length : 0;
+        const enabled = selectedCount > 0;
+
+        if (importSubmitBtn) {
+            importSubmitBtn.disabled = !enabled;
+        }
+
+        if (groupSelectionHint) {
+            groupSelectionHint.textContent = enabled
+                ? `Selected Lists (Groups): ${selectedCount}`
+                : 'Please select at least one List (Group) to enable import.';
+            groupSelectionHint.classList.toggle('text-rose-600', !enabled);
+            groupSelectionHint.classList.toggle('text-emerald-600', enabled);
+        }
+    }
+
+    groupsSelect?.addEventListener('change', refreshImportButtonState);
+    refreshImportButtonState();
+</script>
+@endpush

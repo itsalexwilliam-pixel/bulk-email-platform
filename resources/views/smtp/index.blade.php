@@ -93,6 +93,21 @@
                             Edit
                         </a>
 
+                        <form action="{{ route('smtp.test', $server) }}" method="POST">
+                            @csrf
+                            <button class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium hover:bg-blue-200 transition">
+                                Test SMTP
+                            </button>
+                        </form>
+
+                        <form action="{{ route('smtp.send-test-email', $server) }}" method="POST" class="flex items-center gap-2">
+                            @csrf
+                            <input type="email" name="test_email" required placeholder="test@example.com" class="w-44 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-2 text-xs">
+                            <button class="px-3 py-2 rounded-lg bg-cyan-100 text-cyan-700 text-xs font-medium hover:bg-cyan-200 transition">
+                                Send Test Mail
+                            </button>
+                        </form>
+
                         <form action="{{ route('smtp.toggle', $server) }}" method="POST">
                             @csrf
                             @method('PATCH')

@@ -27,16 +27,66 @@ class SendController extends Controller
 
             if ($queue->wasRecentlyCreated) {
                 $inserted++;
+            } elseif (in_array($queue->status, ['failed', 'paused'], true) && (int) $queue->attempts < 3) {
+                $queue->update([
+                    'status' => 'pending',
+                    'last_error' => null,
+                ]);
             }
         }
 
-        // If rows entered queue, mark as sending so UI reflects live pipeline activity.
-        // Keep enum-safe fallback to scheduled when nothing new was queued.
-        $campaign->update(['status' => $inserted > 0 ? 'sending' : 'scheduled']);
+        $hasSendableQueue = EmailQueue::where('campaign_id', $campaign->id)
+            ->where(function ($query) {
+                $query->where('status', 'pending')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'failed')->where('attempts', '<', 3);
+                    });
+            })
+            ->exists();
 
-        return redirect()->route('campaigns.index')
-            ->with('success', $inserted > 0
-                ? "Queued {$inserted} email(s). Sending started."
-                : "No new recipients were queued. Campaign remains scheduled.");
+        $campaign->update(['status' => $hasSendableQueue ? 'sending' : 'scheduled']);
+
+        $message = $inserted > 0
+            ? "Queued {$inserted} email(s). Sending started."
+            : ($hasSendableQueue
+                ? 'Existing queued recipients found. Sending resumed.'
+                : 'No sendable recipients in queue. Campaign remains scheduled.');
+
+        return redirect()->route('campaigns.index')->with('success', $message);
+    }
+
+    public function pause(Campaign $campaign)
+    {
+        if ($campaign->status !== 'sending') {
+            return redirect()->route('campaigns.index')->withErrors([
+                'campaign_pause' => 'Only sending campaigns can be paused.',
+            ]);
+        }
+
+        $campaign->update(['status' => 'paused']);
+
+        return redirect()->route('campaigns.index')->with('success', 'Campaign paused successfully.');
+    }
+
+    public function resume(Campaign $campaign)
+    {
+        $hasSendableQueue = EmailQueue::where('campaign_id', $campaign->id)
+            ->where(function ($query) {
+                $query->where('status', 'pending')
+                    ->orWhere(function ($q) {
+                        $q->where('status', 'failed')->where('attempts', '<', 3);
+                    });
+            })
+            ->exists();
+
+        if (!$hasSendableQueue) {
+            return redirect()->route('campaigns.index')->withErrors([
+                'campaign_resume' => 'No sendable recipients available to resume this campaign.',
+            ]);
+        }
+
+        $campaign->update(['status' => 'sending']);
+
+        return redirect()->route('campaigns.index')->with('success', 'Campaign resumed successfully.');
     }
 }

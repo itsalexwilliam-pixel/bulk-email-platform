@@ -54,30 +54,35 @@
                 <p class="mt-1 text-xs text-slate-500">If set, campaign status becomes scheduled; otherwise saved as draft.</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Select Contacts</label>
-                    <select name="contact_ids[]" multiple size="8"
-                            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        @foreach($contacts as $contact)
-                            <option value="{{ $contact->id }}" @selected(collect(old('contact_ids'))->contains($contact->id))>
-                                {{ $contact->name }} ({{ $contact->email }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Select Groups</label>
-                    <select name="group_ids[]" multiple size="8"
+            <div class="space-y-4">
+                <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4">
+                    <label class="block text-sm font-semibold mb-1 text-indigo-900 dark:text-indigo-200">Select Lists (Groups) <span class="text-rose-600">*</span></label>
+                    <select id="groupIdsSelect" name="group_ids[]" multiple size="8" required
                             class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         @foreach($groups as $group)
-                            <option value="{{ $group->id }}" @selected(collect(old('group_ids'))->contains($group->id))>
-                                {{ $group->name }}
+                            <option value="{{ $group->id }}" @selected(collect(old('group_ids'))->contains($group->id)) data-count="{{ $group->contacts()->count() }}">
+                                {{ $group->name }} ({{ $group->contacts()->count() }} contacts)
                             </option>
                         @endforeach
                     </select>
-                    <p class="mt-1 text-xs text-slate-500">Selected group contacts are merged with manually selected contacts.</p>
+                    <p id="groupSelectionSummary" class="mt-2 text-xs text-rose-600">Please select at least one List (Group).</p>
+                    <p class="mt-1 text-xs text-indigo-800 dark:text-indigo-300">Recipients are resolved from selected lists. Duplicates are automatically removed.</p>
                 </div>
+
+                <details class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                    <summary class="cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">Advanced (optional): Add manual contacts</summary>
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Select Contacts (optional)</label>
+                        <select name="contact_ids[]" multiple size="8"
+                                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            @foreach($contacts as $contact)
+                                <option value="{{ $contact->id }}" @selected(collect(old('contact_ids'))->contains($contact->id))>
+                                    {{ $contact->name }} ({{ $contact->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </details>
             </div>
         </div>
 
@@ -99,7 +104,7 @@
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
             <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Step 4: Review & Send</h2>
             <div class="flex flex-wrap items-center gap-3">
-                <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">
+                <button id="saveCampaignBtn" type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Save Campaign
                 </button>
                 <a href="{{ route('campaigns.index') }}"
@@ -134,11 +139,39 @@
     const previewBtn = document.getElementById('previewBtn');
     const previewWrapper = document.getElementById('previewWrapper');
     const previewBody = document.getElementById('previewBody');
+    const groupIdsSelect = document.getElementById('groupIdsSelect');
+    const saveCampaignBtn = document.getElementById('saveCampaignBtn');
+    const groupSelectionSummary = document.getElementById('groupSelectionSummary');
 
     previewBtn?.addEventListener('click', function () {
         const raw = bodyEditor ? bodyEditor.value : '';
         previewBody.innerHTML = raw;
         previewWrapper.classList.remove('hidden');
     });
+
+    function updateGroupSelectionState() {
+        const selected = groupIdsSelect ? Array.from(groupIdsSelect.selectedOptions) : [];
+        const selectedCount = selected.length;
+        const estimatedRecipients = selected.reduce((sum, opt) => sum + Number(opt.dataset.count || 0), 0);
+
+        if (saveCampaignBtn) {
+            saveCampaignBtn.disabled = selectedCount === 0;
+        }
+
+        if (groupSelectionSummary) {
+            if (selectedCount === 0) {
+                groupSelectionSummary.textContent = 'Please select at least one List (Group).';
+                groupSelectionSummary.classList.remove('text-emerald-600');
+                groupSelectionSummary.classList.add('text-rose-600');
+            } else {
+                groupSelectionSummary.textContent = `Selected Lists (Groups): ${selectedCount} | Estimated recipients: ${estimatedRecipients}`;
+                groupSelectionSummary.classList.remove('text-rose-600');
+                groupSelectionSummary.classList.add('text-emerald-600');
+            }
+        }
+    }
+
+    groupIdsSelect?.addEventListener('change', updateGroupSelectionState);
+    updateGroupSelectionState();
 </script>
 @endpush

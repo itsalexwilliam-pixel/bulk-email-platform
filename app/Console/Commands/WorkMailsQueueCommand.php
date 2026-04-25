@@ -33,12 +33,14 @@ class WorkMailsQueueCommand extends Command
             ->get();
 
         foreach ($items as $item) {
+            $this->line("Processing queue #{$item->id} | campaign #{$item->campaign_id} | {$item->email} | status={$item->status} attempts={$item->attempts}");
+
             $isUnsubscribed = Unsubscribe::whereRaw('LOWER(email) = ?', [strtolower($item->email)])->exists();
 
             if ($isUnsubscribed) {
                 $item->update([
                     'status' => 'failed',
-                    'attempts' => 0,
+                    'attempts' => 3,
                     'last_error' => 'Unsubscribed',
                 ]);
 
@@ -55,6 +57,8 @@ class WorkMailsQueueCommand extends Command
                 $this->warn('No active SMTP servers found.');
                 break;
             }
+
+            $this->line("Using SMTP #{$smtp->id} {$smtp->host}:{$smtp->port}");
 
             config([
                 'mail.default' => 'smtp',
@@ -76,6 +80,8 @@ class WorkMailsQueueCommand extends Command
                     'sent_at' => Carbon::now(),
                     'last_error' => null,
                 ]);
+
+                $this->info("Sent successfully: {$item->email}");
             } catch (\Throwable $e) {
                 $attempts = $item->attempts + 1;
                 $item->update([
@@ -83,11 +89,42 @@ class WorkMailsQueueCommand extends Command
                     'status' => 'failed',
                     'last_error' => $e->getMessage(),
                 ]);
+
+                $this->error("Send failed: {$item->email} | attempts={$attempts} | error={$e->getMessage()}");
             }
 
             $smtp->update(['last_used_at' => Carbon::now()]);
             $processed++;
             sleep(1);
+        }
+
+        $campaignIds = $items->pluck('campaign_id')->unique()->filter()->values();
+
+        foreach ($campaignIds as $campaignId) {
+            $campaignQueue = EmailQueue::where('campaign_id', $campaignId);
+
+            $hasSendable = (clone $campaignQueue)
+                ->where(function ($query) {
+                    $query->where('status', 'pending')
+                        ->orWhere(function ($q) {
+                            $q->where('status', 'failed')->where('attempts', '<', 3);
+                        });
+                })
+                ->exists();
+
+            $sentCount = (clone $campaignQueue)->where('status', 'sent')->count();
+            $totalCount = (clone $campaignQueue)->count();
+
+            if ($hasSendable) {
+                \App\Models\Campaign::where('id', $campaignId)->update(['status' => 'sending']);
+                $this->line("Campaign #{$campaignId} status => sending");
+            } elseif ($totalCount > 0 && $sentCount > 0) {
+                \App\Models\Campaign::where('id', $campaignId)->update(['status' => 'completed']);
+                $this->line("Campaign #{$campaignId} status => completed");
+            } else {
+                \App\Models\Campaign::where('id', $campaignId)->update(['status' => 'scheduled']);
+                $this->line("Campaign #{$campaignId} status => scheduled (no sendable rows)");
+            }
         }
 
         $this->info("Processed {$processed} email(s).");

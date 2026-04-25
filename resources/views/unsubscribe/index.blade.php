@@ -1,46 +1,48 @@
 @extends('layouts.app')
 
+@section('page_title', 'Unsubscribed Emails')
+
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h4 mb-0">Unsubscribed Emails</h1>
+<div class="space-y-6">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Unsubscribed Emails</h2>
+        <p class="text-sm text-slate-500 mt-1">Contacts who opted out from your campaigns.</p>
     </div>
 
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Contact</th>
-                            <th>Unsubscribed At</th>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 dark:bg-slate-800/50">
+                    <tr class="text-left text-slate-500 dark:text-slate-400">
+                        <th class="py-3 px-4">Email</th>
+                        <th class="py-3 px-4">Contact</th>
+                        <th class="py-3 px-4">Unsubscribed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($unsubscribes as $item)
+                        <tr class="border-t border-slate-100 dark:border-slate-800">
+                            <td class="py-3 px-4 text-slate-800 dark:text-slate-100">{{ $item->email }}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                @if($item->contact)
+                                    {{ $item->contact->name }} ({{ $item->contact->email }})
+                                @else
+                                    <span class="text-slate-400">N/A</span>
+                                @endif
+                            </td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ optional($item->unsubscribed_at)->format('Y-m-d H:i:s') }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($unsubscribes as $item)
-                            <tr>
-                                <td>{{ $item->email }}</td>
-                                <td>
-                                    @if($item->contact)
-                                        {{ $item->contact->name }} ({{ $item->contact->email }})
-                                    @else
-                                        <span class="text-muted">N/A</span>
-                                    @endif
-                                </td>
-                                <td>{{ optional($item->unsubscribed_at)->format('Y-m-d H:i:s') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center py-4 text-muted">No unsubscribed emails found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="py-8 text-center text-slate-500">No unsubscribed emails found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
         @if(method_exists($unsubscribes, 'links'))
-            <div class="card-footer">
+            <div class="border-t border-slate-200 dark:border-slate-800 px-4 py-3">
                 {{ $unsubscribes->links() }}
             </div>
         @endif

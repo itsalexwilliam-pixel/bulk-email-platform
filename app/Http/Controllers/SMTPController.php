@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SmtpServer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class SMTPController extends Controller
 {
@@ -70,5 +71,56 @@ class SMTPController extends Controller
         $smtp->delete();
 
         return redirect()->route('smtp.index')->with('success', 'SMTP server deleted.');
+    }
+
+    public function testConnection(SmtpServer $smtp)
+    {
+        try {
+            $this->applySmtpConfig($smtp);
+
+            Mail::raw('SMTP connection test successful.', function ($message) use ($smtp) {
+                $message->to($smtp->from_email)
+                    ->subject('SMTP Connection Test');
+            });
+
+            return back()->with('success', "SMTP test successful for {$smtp->name}.");
+        } catch (\Throwable $e) {
+            return back()->withErrors(['smtp_test' => "SMTP test failed for {$smtp->name}: {$e->getMessage()}"]);
+        }
+    }
+
+    public function sendTestEmail(Request $request, SmtpServer $smtp)
+    {
+        $data = $request->validate([
+            'test_email' => ['required', 'email'],
+        ]);
+
+        try {
+            $this->applySmtpConfig($smtp);
+
+            Mail::raw("This is a test email from SMTP server: {$smtp->name}", function ($message) use ($smtp, $data) {
+                $message->to($data['test_email'])
+                    ->subject('Test Email - SMTP Configuration')
+                    ->from($smtp->from_email, $smtp->from_name);
+            });
+
+            return back()->with('success', "Test email sent successfully via {$smtp->name}.");
+        } catch (\Throwable $e) {
+            return back()->withErrors(['smtp_test_email' => "Failed to send test email via {$smtp->name}: {$e->getMessage()}"]);
+        }
+    }
+
+    private function applySmtpConfig(SmtpServer $smtp): void
+    {
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => $smtp->host,
+            'mail.mailers.smtp.port' => $smtp->port,
+            'mail.mailers.smtp.username' => $smtp->username,
+            'mail.mailers.smtp.password' => $smtp->password,
+            'mail.mailers.smtp.encryption' => $smtp->encryption === 'none' ? null : $smtp->encryption,
+            'mail.from.address' => $smtp->from_email,
+            'mail.from.name' => $smtp->from_name,
+        ]);
     }
 }

@@ -28,7 +28,11 @@ Route::middleware('auth')->group(function () {
     Route::resource('contacts', ContactController::class)->except(['show']);
     Route::resource('groups', GroupController::class)->only(['index', 'store', 'destroy']);
     Route::resource('campaigns', CampaignController::class)->except(['show']);
+    Route::get('/campaigns/{campaign}/live-stats', [CampaignController::class, 'liveStats'])->name('campaigns.live-stats');
     Route::post('/campaigns/{campaign}/send', [SendController::class, 'sendNow'])->name('campaigns.send');
+    Route::post('/campaigns/{campaign}/pause', [SendController::class, 'pause'])->name('campaigns.pause');
+    Route::post('/campaigns/{campaign}/resume', [SendController::class, 'resume'])->name('campaigns.resume');
+    Route::post('/campaigns/{campaign}/send-test-email', [CampaignController::class, 'sendTestEmail'])->name('campaigns.send-test-email');
 
     Route::get('/smtp', [SMTPController::class, 'index'])->name('smtp.index');
     Route::post('/smtp', [SMTPController::class, 'store'])->name('smtp.store');
@@ -36,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/smtp/{smtp}', [SMTPController::class, 'update'])->name('smtp.update');
     Route::delete('/smtp/{smtp}', [SMTPController::class, 'destroy'])->name('smtp.destroy');
     Route::patch('/smtp/{smtp}/toggle', [SMTPController::class, 'toggle'])->name('smtp.toggle');
+    Route::post('/smtp/{smtp}/test', [SMTPController::class, 'testConnection'])->name('smtp.test');
+    Route::post('/smtp/{smtp}/send-test-email', [SMTPController::class, 'sendTestEmail'])->name('smtp.send-test-email');
 
     Route::get('/import', [ImportController::class, 'index'])->name('import.index');
     Route::post('/import', [ImportController::class, 'store'])->name('import.store');

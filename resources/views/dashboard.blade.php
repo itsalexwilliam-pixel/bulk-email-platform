@@ -5,7 +5,7 @@
 @section('content')
 @php
     $contactsCount = \App\Models\Contact::count();
-    $campaignCount = \App\Models\Campaign::count();
+    $campaignCount = \App\Models\Campaign::whereIn('status', ['sent', 'completed'])->count();
     $emailsSent = \App\Models\EmailQueue::where('status', 'sent')->count();
 
     $openRate = 0;
@@ -16,6 +16,38 @@
     }
 
     $recentCampaigns = \App\Models\Campaign::latest()->take(6)->get(['id', 'name', 'subject', 'status', 'created_at']);
+
+    $startDate = now()->subDays(6)->startOfDay();
+    $sentByDateRaw = \App\Models\EmailQueue::selectRaw('DATE(sent_at) as sent_date, COUNT(*) as total')
+        ->where('status', 'sent')
+        ->whereNotNull('sent_at')
+        ->where('sent_at', '>=', $startDate)
+        ->groupBy('sent_date')
+        ->pluck('total', 'sent_date');
+
+    $sentChartLabels = [];
+    $sentChartValues = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $day = now()->subDays($i);
+        $dateKey = $day->toDateString();
+        $sentChartLabels[] = $day->format('D');
+        $sentChartValues[] = (int) ($sentByDateRaw[$dateKey] ?? 0);
+    }
+
+    $topCampaigns = \App\Models\Campaign::latest()->take(4)->get(['id', 'name']);
+    $openClickLabels = [];
+    $openClickOpens = [];
+    $openClickClicks = [];
+
+    foreach ($topCampaigns as $c) {
+        $openClickLabels[] = $c->name;
+        $openClickOpens[] = \App\Models\EmailOpen::whereIn('email_queue_id', function ($q) use ($c) {
+            $q->select('id')->from('email_queue')->where('campaign_id', $c->id);
+        })->count();
+        $openClickClicks[] = \App\Models\EmailClick::whereIn('email_queue_id', function ($q) use ($c) {
+            $q->select('id')->from('email_queue')->where('campaign_id', $c->id);
+        })->count();
+    }
 @endphp
 
 <div class="space-y-6">
@@ -88,10 +120,10 @@
         new Chart(sentCtx, {
             type: 'line',
             data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                labels: @json($sentChartLabels),
                 datasets: [{
                     label: 'Emails Sent',
-                    data: [18, 26, 31, 24, 40, 36, 52],
+                    data: @json($sentChartValues),
                     borderColor: '#4f46e5',
                     backgroundColor: 'rgba(79, 70, 229, 0.15)',
                     tension: 0.35,
@@ -110,10 +142,10 @@
         new Chart(openClickCtx, {
             type: 'bar',
             data: {
-                labels: ['Campaign A', 'Campaign B', 'Campaign C', 'Campaign D'],
+                labels: @json($openClickLabels),
                 datasets: [
-                    { label: 'Opens', data: [120, 90, 160, 110], backgroundColor: '#10b981' },
-                    { label: 'Clicks', data: [42, 28, 58, 31], backgroundColor: '#3b82f6' }
+                    { label: 'Opens', data: @json($openClickOpens), backgroundColor: '#10b981' },
+                    { label: 'Clicks', data: @json($openClickClicks), backgroundColor: '#3b82f6' }
                 ]
             },
             options: {

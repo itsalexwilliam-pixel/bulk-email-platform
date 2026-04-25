@@ -72,7 +72,7 @@ class CampaignMail extends Mailable
 
             $trackedUrl = route('track.click', [
                 'id' => $this->queueId,
-                'url' => urlencode($href),
+                'url' => $href,
             ]);
 
             return str_replace($matches[2], e($trackedUrl), $fullTag);

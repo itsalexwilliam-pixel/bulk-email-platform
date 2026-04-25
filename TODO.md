@@ -1,9 +1,6 @@
-# TODO - Full Working Condition Fix
-
-- [ ] Add real settings persistence layer (migration + model)
-- [ ] Add SettingsController and settings view
-- [ ] Wire `/settings` routes and update sidebar settings link
-- [ ] Improve queue worker to auto-complete campaign status transitions
-- [ ] Validate send flow and scheduler execution
-- [ ] Run focused tests for settings + sending flow
-- [ ] Push latest fixes and provide pull/deploy commands
+- [x] Step 1: Fix Campaign Edit UI to Tailwind-consistent layout
+- [x] Step 2: Add visible Test Campaign Mail action in campaign edit/index UI
+- [ ] Step 3: Add Start / Pause / Resume campaign routes + controller logic + UI buttons
+- [ ] Step 4: Fix queue processing so pending records are processed reliably
+- [ ] Step 5: Add warm-up sending configuration and command integration
+- [ ] Step 6: Thorough testing (UI walkthrough + endpoint checks + success validations)
