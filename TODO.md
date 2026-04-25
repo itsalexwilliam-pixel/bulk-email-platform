@@ -1,8 +1,8 @@
-- [ ] Restyle contacts create page to SaaS UI
-- [ ] Restyle contacts edit page to SaaS UI
-- [ ] Restyle groups index page to SaaS UI
-- [ ] Restyle import index page to SaaS UI
-- [ ] Restyle import result page to SaaS UI
-- [ ] Fix TinyMCE API key handling in campaigns create page
-- [ ] Verify/add settings route fallback
-- [ ] Run critical validation commands (view cache + route list)
+# TODO - Reports/Settings/Sending Live Fix
+
+- [x] Add missing reports route in `routes/web.php`
+- [x] Update `SendController` status transition logic for live sending
+- [x] Verify and fix `WorkMailsQueueCommand` pending queue processing
+- [x] Verify scheduler registration for worker command (Kernel/console routes)
+- [x] Verify and fix settings/profile page wiring
+- [x] Run critical verification for reports tab, settings tab, and send flow

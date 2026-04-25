@@ -30,11 +30,13 @@ class SendController extends Controller
             }
         }
 
-        // campaigns.status enum does not include 'queued' in current schema
-        // use 'scheduled' to represent queued-for-sending state safely
-        $campaign->update(['status' => 'scheduled']);
+        // If rows entered queue, mark as sending so UI reflects live pipeline activity.
+        // Keep enum-safe fallback to scheduled when nothing new was queued.
+        $campaign->update(['status' => $inserted > 0 ? 'sending' : 'scheduled']);
 
         return redirect()->route('campaigns.index')
-            ->with('success', "Queued {$inserted} email(s) for sending.");
+            ->with('success', $inserted > 0
+                ? "Queued {$inserted} email(s). Sending started."
+                : "No new recipients were queued. Campaign remains scheduled.");
     }
 }

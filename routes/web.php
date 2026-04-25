@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/import', [ImportController::class, 'store'])->name('import.store');
 
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
+    Route::view('/reports', 'reports.index')->name('reports.index');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
