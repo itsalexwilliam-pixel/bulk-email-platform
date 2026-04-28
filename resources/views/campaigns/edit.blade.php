@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <form action="{{ route('campaigns.update', $campaign) }}" method="POST" class="space-y-6">
+    <form action="{{ route('campaigns.update', $campaign) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -47,6 +47,29 @@
                 <textarea name="body" id="body-editor" rows="12" required>{{ old('body', $campaign->body) }}</textarea>
             </div>
 
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Attachment (optional, max 10MB)</label>
+                    <input type="file" name="attachment"
+                           class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    @error('attachment')
+                        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                @if($campaign->attachment_path)
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-sm">
+                        <p class="text-slate-700 dark:text-slate-300">
+                            Current attachment: <span class="font-medium">{{ $campaign->attachment_name ?: basename($campaign->attachment_path) }}</span>
+                        </p>
+                        <label class="mt-2 inline-flex items-center gap-2 text-rose-600">
+                            <input type="checkbox" name="remove_attachment" value="1" class="rounded border-slate-300 dark:border-slate-700">
+                            Remove current attachment
+                        </label>
+                    </div>
+                @endif
+            </div>
+
             <button type="button" id="previewBtn"
                     class="inline-flex items-center px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                 Preview
@@ -58,6 +81,40 @@
                        value="{{ old('scheduled_at', $campaign->scheduled_at ? \Illuminate\Support\Carbon::parse($campaign->scheduled_at)->format('Y-m-d\TH:i') : '') }}"
                        class="w-full md:w-80 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <p class="mt-1 text-xs text-slate-500">If set, campaign status becomes scheduled; otherwise saved as draft.</p>
+            </div>
+
+            <div class="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 p-4 space-y-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    <input type="checkbox" name="warmup_enabled" value="1" @checked(old('warmup_enabled', $campaign->warmup_enabled))
+                           class="rounded border-slate-300 dark:border-slate-700">
+                    Enable Warmup (Domain/IP)
+                </label>
+                <p class="text-xs text-amber-800 dark:text-amber-300">Warmup is applied only when enabled. History is preserved when disabled.</p>
+                <p class="text-xs text-slate-600 dark:text-slate-300">
+                    Current warmup day: <span class="font-semibold">Day {{ $campaign->getEffectiveWarmupDay() }}</span>
+                    @if($campaign->warmup_started_at)
+                        | Started: {{ $campaign->warmup_started_at->format('Y-m-d H:i') }}
+                    @endif
+                </p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-[320px] text-xs">
+                        <thead>
+                            <tr class="text-left text-slate-600 dark:text-slate-300">
+                                <th class="py-1 pr-4">Day</th>
+                                <th class="py-1">Emails</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-700 dark:text-slate-200">
+                            @foreach($warmupSchedule as $day => $cap)
+                                <tr @class(['font-semibold text-amber-700 dark:text-amber-300' => $day === $campaign->getEffectiveWarmupDay()])>
+                                    <td class="py-1 pr-4">Day {{ $day }}</td>
+                                    <td class="py-1">{{ $cap }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4">

@@ -6,9 +6,11 @@ use App\Models\Campaign;
 use App\Models\Contact;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class CampaignMail extends Mailable
 {
@@ -33,6 +35,18 @@ class CampaignMail extends Mailable
         return new Content(
             htmlString: $this->buildTrackedHtml($this->campaign->body)
         );
+    }
+
+    public function attachments(): array
+    {
+        if (!empty($this->campaign->attachment_path) && Storage::disk('public')->exists($this->campaign->attachment_path)) {
+            return [
+                Attachment::fromPath(Storage::disk('public')->path($this->campaign->attachment_path))
+                    ->as($this->campaign->attachment_name ?: basename($this->campaign->attachment_path)),
+            ];
+        }
+
+        return [];
     }
 
     private function buildTrackedHtml(string $html): string

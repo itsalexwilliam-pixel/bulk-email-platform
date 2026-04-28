@@ -7,6 +7,8 @@ use App\Models\Contact;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CampaignManagementFeatureTest extends TestCase
@@ -108,6 +110,45 @@ class CampaignManagementFeatureTest extends TestCase
             'campaign_id' => $campaign->id,
             'contact_id' => $contactB->id,
         ]);
+    }
+
+    public function test_campaign_attachment_is_saved_and_updated(): void
+    {
+        $this->actingAsUser();
+        Storage::fake('public');
+
+        $createResponse = $this->post(route('campaigns.store'), [
+            'name' => 'Attachment Campaign',
+            'subject' => 'Attachment Subject',
+            'body' => '<p>Body</p>',
+            'attachment' => UploadedFile::fake()->create('offer.pdf', 200, 'application/pdf'),
+        ]);
+
+        $createResponse->assertRedirect(route('campaigns.index'));
+
+        $campaign = Campaign::where('name', 'Attachment Campaign')->firstOrFail();
+
+        $this->assertNotNull($campaign->attachment_path);
+        $this->assertSame('offer.pdf', $campaign->attachment_name);
+        Storage::disk('public')->assertExists($campaign->attachment_path);
+
+        $oldPath = $campaign->attachment_path;
+
+        $updateResponse = $this->put(route('campaigns.update', $campaign), [
+            'name' => 'Attachment Campaign Updated',
+            'subject' => 'Attachment Subject Updated',
+            'body' => '<p>Body Updated</p>',
+            'attachment' => UploadedFile::fake()->create('new-offer.pdf', 250, 'application/pdf'),
+        ]);
+
+        $updateResponse->assertRedirect(route('campaigns.index'));
+
+        $campaign->refresh();
+
+        $this->assertNotNull($campaign->attachment_path);
+        $this->assertNotSame($oldPath, $campaign->attachment_path);
+        Storage::disk('public')->assertExists($campaign->attachment_path);
+        Storage::disk('public')->assertMissing($oldPath);
     }
 
     public function test_delete_campaign(): void

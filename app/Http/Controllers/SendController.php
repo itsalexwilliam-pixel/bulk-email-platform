@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCampaignQueueJob;
 use App\Models\Campaign;
 use App\Models\EmailQueue;
 
@@ -46,11 +47,21 @@ class SendController extends Controller
 
         $campaign->update(['status' => $hasSendableQueue ? 'sending' : 'scheduled']);
 
+        $workerTriggered = false;
+        if ($hasSendableQueue) {
+            ProcessCampaignQueueJob::dispatch($campaign->id, 60);
+            $workerTriggered = true;
+        }
+
         $message = $inserted > 0
             ? "Queued {$inserted} email(s). Sending started."
             : ($hasSendableQueue
                 ? 'Existing queued recipients found. Sending resumed.'
                 : 'No sendable recipients in queue. Campaign remains scheduled.');
+
+        if ($workerTriggered) {
+            $message .= ' Background worker triggered.';
+        }
 
         return redirect()->route('campaigns.index')->with('success', $message);
     }

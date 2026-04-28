@@ -1,6 +1,7 @@
-- [x] Step 1: Fix Campaign Edit UI to Tailwind-consistent layout
-- [x] Step 2: Add visible Test Campaign Mail action in campaign edit/index UI
-- [ ] Step 3: Add Start / Pause / Resume campaign routes + controller logic + UI buttons
-- [ ] Step 4: Fix queue processing so pending records are processed reliably
-- [ ] Step 5: Add warm-up sending configuration and command integration
-- [ ] Step 6: Thorough testing (UI walkthrough + endpoint checks + success validations)
+- [ ] Add warmup columns migration for campaigns (and queue audit cap column if needed)
+- [ ] Update Campaign model fillable + warmup helper methods
+- [ ] Update CampaignController store/update to persist warmup fields with history-preserve behavior
+- [ ] Update campaign create/edit views with warmup enable toggle + schedule display
+- [ ] Update WorkMailsQueueCommand to enforce per-campaign warmup cap when enabled
+- [ ] Add/extend feature tests for warmup critical paths
+- [ ] Run migrations and run focused tests

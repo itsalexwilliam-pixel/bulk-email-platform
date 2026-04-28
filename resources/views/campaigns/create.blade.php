@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <form action="{{ route('campaigns.store') }}" method="POST" class="space-y-6">
+    <form action="{{ route('campaigns.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-5">
@@ -52,6 +52,34 @@
                 <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}"
                        class="w-full md:w-80 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <p class="mt-1 text-xs text-slate-500">If set, campaign status becomes scheduled; otherwise saved as draft.</p>
+            </div>
+
+            <div class="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/30 p-4 space-y-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    <input type="checkbox" name="warmup_enabled" value="1" @checked(old('warmup_enabled'))
+                           class="rounded border-slate-300 dark:border-slate-700">
+                    Enable Warmup (Domain/IP)
+                </label>
+                <p class="text-xs text-amber-800 dark:text-amber-300">When enabled, sending cap is auto-limited by warmup day and increases gradually.</p>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-[320px] text-xs">
+                        <thead>
+                            <tr class="text-left text-slate-600 dark:text-slate-300">
+                                <th class="py-1 pr-4">Day</th>
+                                <th class="py-1">Emails</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-700 dark:text-slate-200">
+                            @foreach($warmupSchedule as $day => $cap)
+                                <tr>
+                                    <td class="py-1 pr-4">Day {{ $day }}</td>
+                                    <td class="py-1">{{ $cap }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -89,6 +117,15 @@
         <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
             <h2 class="text-base font-semibold text-slate-900 dark:text-white">Step 3: Email Editor</h2>
             <textarea name="body" id="body-editor" rows="12" required>{{ old('body') }}</textarea>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Attachment (optional, max 10MB)</label>
+                <input type="file" name="attachment"
+                       class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                @error('attachment')
+                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                @enderror
+            </div>
 
             <button type="button" id="previewBtn"
                     class="inline-flex items-center px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">

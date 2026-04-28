@@ -10,6 +10,7 @@ use App\Models\Group;
 use App\Models\SmtpServer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class CampaignController extends Controller
 {
@@ -84,7 +85,9 @@ class CampaignController extends Controller
         $contacts = Contact::orderBy('name')->get();
         $groups = Group::orderBy('name')->get();
 
-        return view('campaigns.create', compact('contacts', 'groups'));
+        $warmupSchedule = Campaign::WARMUP_SCHEDULE;
+
+        return view('campaigns.create', compact('contacts', 'groups', 'warmupSchedule'));
     }
 
     public function store(Request $request)
@@ -98,15 +101,35 @@ class CampaignController extends Controller
             'contact_ids.*' => ['integer', 'exists:contacts,id'],
             'group_ids' => ['nullable', 'array'],
             'group_ids.*' => ['integer', 'exists:groups,id'],
+            'attachment' => ['nullable', 'file', 'max:10240'],
+            'warmup_enabled' => ['nullable', 'boolean'],
         ]);
 
-        $campaign = Campaign::create([
-            'name' => $data['name'],
-            'subject' => $data['subject'],
-            'body' => $data['body'],
-            'scheduled_at' => $data['scheduled_at'] ?? null,
-            'status' => !empty($data['scheduled_at']) ? 'scheduled' : 'draft',
-        ]);
+        $attachmentPath = null;
+        $attachmentName = null;
+
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $attachmentPath = $file->store('campaign_attachments', 'public');
+            $attachmentName = $file->getClientOriginalName();
+        }
+
+        $campaign = new Campaign();
+        $campaign->name = $data['name'];
+        $campaign->subject = $data['subject'];
+        $campaign->body = $data['body'];
+        $campaign->attachment_path = $attachmentPath;
+        $campaign->attachment_name = $attachmentName;
+        $campaign->scheduled_at = $data['scheduled_at'] ?? null;
+        $campaign->status = !empty($data['scheduled_at']) ? 'scheduled' : 'draft';
+        $campaign->warmup_enabled = $request->boolean('warmup_enabled');
+        $campaign->warmup_day = $campaign->warmup_day ?: 1;
+
+        if ($campaign->warmup_enabled && empty($campaign->warmup_started_at)) {
+            $campaign->warmup_started_at = now();
+        }
+
+        $campaign->save();
 
         $contactIds = collect($data['contact_ids'] ?? []);
         $groupContactIds = Contact::whereHas('groups', function ($query) use ($data) {
@@ -125,7 +148,9 @@ class CampaignController extends Controller
         $groups = Group::orderBy('name')->get();
         $selectedContactIds = $campaign->contacts()->pluck('contacts.id')->toArray();
 
-        return view('campaigns.edit', compact('campaign', 'contacts', 'groups', 'selectedContactIds'));
+        $warmupSchedule = Campaign::WARMUP_SCHEDULE;
+
+        return view('campaigns.edit', compact('campaign', 'contacts', 'groups', 'selectedContactIds', 'warmupSchedule'));
     }
 
     public function update(Request $request, Campaign $campaign)
@@ -139,15 +164,46 @@ class CampaignController extends Controller
             'contact_ids.*' => ['integer', 'exists:contacts,id'],
             'group_ids' => ['nullable', 'array'],
             'group_ids.*' => ['integer', 'exists:groups,id'],
+            'attachment' => ['nullable', 'file', 'max:10240'],
+            'remove_attachment' => ['nullable', 'boolean'],
+            'warmup_enabled' => ['nullable', 'boolean'],
         ]);
 
-        $campaign->update([
+        $wasWarmupEnabled = (bool) $campaign->warmup_enabled;
+        $isWarmupEnabled = $request->boolean('warmup_enabled');
+
+        $updateData = [
             'name' => $data['name'],
             'subject' => $data['subject'],
             'body' => $data['body'],
             'scheduled_at' => $data['scheduled_at'] ?? null,
             'status' => !empty($data['scheduled_at']) ? 'scheduled' : 'draft',
-        ]);
+            'warmup_enabled' => $isWarmupEnabled,
+        ];
+
+        if (!$wasWarmupEnabled && $isWarmupEnabled && empty($campaign->warmup_started_at)) {
+            $updateData['warmup_started_at'] = now();
+            $updateData['warmup_day'] = max(1, (int) ($campaign->warmup_day ?: 1));
+        }
+
+        if ($request->boolean('remove_attachment')) {
+            if (!empty($campaign->attachment_path) && Storage::disk('public')->exists($campaign->attachment_path)) {
+                Storage::disk('public')->delete($campaign->attachment_path);
+            }
+            $updateData['attachment_path'] = null;
+            $updateData['attachment_name'] = null;
+        }
+
+        if ($request->hasFile('attachment')) {
+            if (!empty($campaign->attachment_path) && Storage::disk('public')->exists($campaign->attachment_path)) {
+                Storage::disk('public')->delete($campaign->attachment_path);
+            }
+            $file = $request->file('attachment');
+            $updateData['attachment_path'] = $file->store('campaign_attachments', 'public');
+            $updateData['attachment_name'] = $file->getClientOriginalName();
+        }
+
+        $campaign->update($updateData);
 
         $contactIds = collect($data['contact_ids'] ?? []);
         $groupContactIds = Contact::whereHas('groups', function ($query) use ($data) {
@@ -195,6 +251,12 @@ class CampaignController extends Controller
                 $message->to($data['test_email'])
                     ->subject("[TEST] {$campaign->subject}")
                     ->from($smtp->from_email, $smtp->from_name);
+
+                if (!empty($campaign->attachment_path) && Storage::disk('public')->exists($campaign->attachment_path)) {
+                    $message->attach(Storage::disk('public')->path($campaign->attachment_path), [
+                        'as' => $campaign->attachment_name ?: basename($campaign->attachment_path),
+                    ]);
+                }
             });
 
             return back()->with('success', 'Test campaign email sent successfully.');
