@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Mail\CampaignMail;
 use App\Models\EmailQueue;
 use App\Models\SmtpServer;
+use App\Models\SmtpServerUsage;
 use App\Models\Unsubscribe;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -71,20 +72,46 @@ class WorkMailsQueueCommand extends Command
                 continue;
             }
 
-            $smtpServers = SmtpServer::active()
+            $accountId = (int) ($item->campaign?->account_id ?? 0);
+            if ($accountId <= 0) {
+                $item->update([
+                    'attempts' => $item->attempts + 1,
+                    'status' => 'failed',
+                    'last_error' => 'Missing account context',
+                ]);
+                $this->error("Queue #{$item->id} failed: missing account context.");
+                continue;
+            }
+
+            $smtpServers = SmtpServer::forAccount($accountId)
+                ->active()
+                ->orderBy('priority')
                 ->orderBy('last_used_at')
                 ->orderBy('id')
                 ->get();
 
             if ($smtpServers->isEmpty()) {
-                $this->warn('No active SMTP servers found.');
+                $this->warn("No active SMTP servers found for account #{$accountId}.");
                 break;
             }
 
             $sent = false;
             $lastError = null;
+            $today = Carbon::today()->toDateString();
 
             foreach ($smtpServers as $smtp) {
+                if (!is_null($smtp->daily_limit)) {
+                    $todaySentCount = SmtpServerUsage::query()
+                        ->where('smtp_server_id', $smtp->id)
+                        ->where('usage_date', $today)
+                        ->value('sent_count') ?? 0;
+
+                    if ($todaySentCount >= (int) $smtp->daily_limit) {
+                        $this->warn("Skipping SMTP #{$smtp->id} due to daily limit reached.");
+                        continue;
+                    }
+                }
+
                 $this->line("Using SMTP #{$smtp->id} {$smtp->host}:{$smtp->port}");
 
                 config([
@@ -95,6 +122,7 @@ class WorkMailsQueueCommand extends Command
                     'mail.mailers.smtp.encryption' => $smtp->encryption === 'none' ? null : $smtp->encryption,
                     'mail.mailers.smtp.username' => $smtp->username,
                     'mail.mailers.smtp.password' => $smtp->password,
+                    'mail.mailers.smtp.timeout' => 8,
                     'mail.from.address' => $smtp->from_email,
                     'mail.from.name' => $smtp->from_name,
                 ]);
@@ -109,6 +137,20 @@ class WorkMailsQueueCommand extends Command
                     ]);
 
                     $smtp->update(['last_used_at' => Carbon::now()]);
+
+                    $usage = SmtpServerUsage::query()->firstOrCreate(
+                        [
+                            'smtp_server_id' => $smtp->id,
+                            'account_id' => $accountId,
+                            'usage_date' => $today,
+                        ],
+                        [
+                            'sent_count' => 0,
+                            'fail_count' => 0,
+                        ]
+                    );
+                    $usage->increment('sent_count');
+
                     $this->info("Sent successfully: {$item->email}");
                     $sent = true;
                     break;
@@ -116,16 +158,20 @@ class WorkMailsQueueCommand extends Command
                     $lastError = $e->getMessage();
                     $smtp->update(['last_used_at' => Carbon::now()]);
 
+                    $usage = SmtpServerUsage::query()->firstOrCreate(
+                        [
+                            'smtp_server_id' => $smtp->id,
+                            'account_id' => $accountId,
+                            'usage_date' => $today,
+                        ],
+                        [
+                            'sent_count' => 0,
+                            'fail_count' => 0,
+                        ]
+                    );
+                    $usage->increment('fail_count');
+
                     $this->warn("SMTP #{$smtp->id} failed for {$item->email}: {$lastError}");
-
-                    $dnsOrHostError = str_contains(strtolower($lastError), 'getaddrinfo')
-                        || str_contains(strtolower($lastError), 'no such host')
-                        || str_contains(strtolower($lastError), 'name or service not known')
-                        || str_contains(strtolower($lastError), 'could not resolve host');
-
-                    if (!$dnsOrHostError) {
-                        // Non-DNS failure (e.g. auth), still try next SMTP if available.
-                    }
                 }
             }
 

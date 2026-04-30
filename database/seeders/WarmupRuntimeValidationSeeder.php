@@ -8,7 +8,6 @@ use App\Models\EmailQueue;
 use App\Models\Unsubscribe;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class WarmupRuntimeValidationSeeder extends Seeder
 {
@@ -125,3 +124,7 @@ class WarmupRuntimeValidationSeeder extends Seeder
         $this->command?->info("No-warmup campaign #{$noWarmupCampaign->id} pending rows: {$noWarmupPending}");
     }
 }
+mysql -u bulkmailer -p -h localhost -D bulk_mailer -e "
+SET @w1 := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='bulk_mailer' AND TABLE_NAME='campaigns' AND COLUMN_NAME='warmup_enabled');
+SET @w2 := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='bulk_mailer' AND TABLE_NAME='campaigns' AND COLUMN_NAME='warmup_day');
+SET @w3 := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='bulk_mailer' AND TABLE_NAME='campaigns' AND COLUMN_NAME='warmup_started_at');

@@ -6,9 +6,18 @@
         ['label' => 'Campaigns', 'route' => 'campaigns.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
         ['label' => 'Automations', 'route' => null, 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
         ['label' => 'SMTP / Sending', 'route' => 'smtp.index', 'icon' => 'M3 8l7.89 4.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z'],
+        ['label' => 'Send Single Email', 'route' => 'single-email.create', 'icon' => 'M4 4h16v16H4V4zm2 3v1h12V7H6zm0 3v7h12v-7H6zm2 2h8v1H8v-1zm0 2h6v1H8v-1z'],
         ['label' => 'Reports', 'route' => 'reports.index', 'icon' => 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z'],
         ['label' => 'Settings', 'route' => 'settings.index', 'icon' => 'M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z'],
     ];
+
+    if (auth()->check() && auth()->user()->isAdmin() && Route::has('users.index')) {
+        $navItems[] = [
+            'label' => 'Users',
+            'route' => 'users.index',
+            'icon' => 'M17 20h5V4H2v16h5m10 0v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0H7m5-10a3 3 0 100-6 3 3 0 000 6z',
+        ];
+    }
 @endphp
 
 <aside id="saas-sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 dark:bg-slate-900 dark:border-slate-800 transition-transform duration-300">

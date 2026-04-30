@@ -1,7 +1,3 @@
-- [ ] Add warmup columns migration for campaigns (and queue audit cap column if needed)
-- [ ] Update Campaign model fillable + warmup helper methods
-- [ ] Update CampaignController store/update to persist warmup fields with history-preserve behavior
-- [ ] Update campaign create/edit views with warmup enable toggle + schedule display
-- [ ] Update WorkMailsQueueCommand to enforce per-campaign warmup cap when enabled
-- [ ] Add/extend feature tests for warmup critical paths
-- [ ] Run migrations and run focused tests
+- [x] Update `tests/Feature/Auth/RegistrationTest.php` to reflect disabled public registration
+- [ ] Run full test suite (`php artisan test`)
+- [ ] Report final results

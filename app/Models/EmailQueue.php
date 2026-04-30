@@ -11,7 +11,14 @@ class EmailQueue extends Model
     protected $fillable = [
         'campaign_id',
         'contact_id',
+        'smtp_server_id',
         'email',
+        'type',
+        'subject',
+        'body',
+        'from_email',
+        'from_name',
+        'attachments',
         'status',
         'attempts',
         'last_error',
@@ -19,6 +26,7 @@ class EmailQueue extends Model
     ];
 
     protected $casts = [
+        'attachments' => 'array',
         'sent_at' => 'datetime',
     ];
 
@@ -30,5 +38,10 @@ class EmailQueue extends Model
     public function contact()
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    public function smtpServer()
+    {
+        return $this->belongsTo(SmtpServer::class);
     }
 }
