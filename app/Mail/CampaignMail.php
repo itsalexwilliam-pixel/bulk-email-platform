@@ -4,17 +4,21 @@ namespace App\Mail;
 
 use App\Models\Campaign;
 use App\Models\Contact;
+use App\Support\EmailHtmlPreprocessor;
+use App\Support\TracksEmailContent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 class CampaignMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, TracksEmailContent;
 
     public function __construct(
         public Campaign $campaign,
@@ -32,9 +36,81 @@ class CampaignMail extends Mailable
 
     public function content(): Content
     {
+        $processedBody = EmailHtmlPreprocessor::preprocess((string) $this->campaign->body);
+        $normalizedHtml = $this->normalizeForEmailClient($processedBody);
+        $inlineReadyHtml = $this->inlineCssForEmailClients($normalizedHtml);
+
         return new Content(
-            htmlString: $this->buildTrackedHtml($this->campaign->body)
+            htmlString: $this->buildTrackedHtml(
+                $inlineReadyHtml,
+                $this->queueId,
+                true,
+                $this->contact->email
+            )
         );
+    }
+
+    private function normalizeForEmailClient(string $html): string
+    {
+        $trimmed = trim($html);
+
+        if ($trimmed === '') {
+            return $trimmed;
+        }
+
+        if (stripos($trimmed, '<html') !== false) {
+            return $trimmed;
+        }
+
+        return '<!doctype html>'
+            . '<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>'
+            . '<body style="margin:0;padding:0;background:#ffffff;">'
+            . '<div style="margin:0;padding:0;">' . $trimmed . '</div>'
+            . '</body></html>';
+    }
+
+    private function inlineCssForEmailClients(string $html): string
+    {
+        if (trim($html) === '') {
+            return $html;
+        }
+
+        try {
+            $sanitized = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html) ?? $html;
+            $inliner = new CssToInlineStyles();
+            $inlined = $inliner->convert($sanitized);
+            $inlined = $this->sanitizeUnsupportedInlineCss($inlined);
+
+            $inlined = preg_replace(
+                '/<body([^>]*)>/i',
+                '<body$1 style="margin:0;padding:24px 14px 60px;background:#F5F2F8;color:#18182A;font-family:Arial,Helvetica,sans-serif;line-height:1.6;">',
+                $inlined,
+                1
+            ) ?? $inlined;
+
+            Log::info('Inline HTML sample', [
+                'preview' => substr($inlined, 0, 1000),
+            ]);
+
+            return $inlined;
+        } catch (\Throwable) {
+            return $html;
+        }
+    }
+
+    private function sanitizeUnsupportedInlineCss(string $html): string
+    {
+        return preg_replace_callback('/style\s*=\s*"([^"]*)"/i', function (array $matches): string {
+            $style = $matches[1];
+
+            $filtered = preg_replace('/\bdisplay\s*:\s*(flex|grid)\s*;?/i', '', $style) ?? $style;
+            $filtered = preg_replace('/\bposition\s*:\s*[^;"]+;?/i', '', $filtered) ?? $filtered;
+            $filtered = preg_replace('/\b[a-z-]+\s*:\s*var\([^)]+\)\s*;?/i', '', $filtered) ?? $filtered;
+            $filtered = preg_replace('/\s{2,}/', ' ', trim($filtered)) ?? trim($filtered);
+            $filtered = trim($filtered, " ;");
+
+            return $filtered === '' ? '' : 'style="'.$filtered.'"';
+        }, $html) ?? $html;
     }
 
     public function attachments(): array
@@ -49,47 +125,4 @@ class CampaignMail extends Mailable
         return [];
     }
 
-    private function buildTrackedHtml(string $html): string
-    {
-        $html = $this->rewriteLinksForTracking($html);
-
-        $openUrl = route('track.open', ['id' => $this->queueId]);
-        $pixel = '<img src="' . e($openUrl) . '" alt="" width="1" height="1" style="display:none;" />';
-
-        $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($this->contact->email)]);
-        $unsubscribeHtml = '<p style="margin-top:16px;font-size:12px;color:#6b7280;">'
-            . '<a href="' . e($unsubscribeUrl) . '">Unsubscribe</a>'
-            . '</p>';
-
-        $injection = $unsubscribeHtml . $pixel;
-
-        if (stripos($html, '</body>') !== false) {
-            return preg_replace('/<\/body>/i', $injection . '</body>', $html, 1) ?? ($html . $injection);
-        }
-
-        return $html . $injection;
-    }
-
-    private function rewriteLinksForTracking(string $html): string
-    {
-        return preg_replace_callback('/<a\b[^>]*\bhref=(["\'])(.*?)\1[^>]*>/i', function ($matches) {
-            $fullTag = $matches[0];
-            $href = trim($matches[2]);
-
-            if ($href === '' || str_starts_with($href, '#') || str_starts_with(strtolower($href), 'javascript:')) {
-                return $fullTag;
-            }
-
-            if (!filter_var($href, FILTER_VALIDATE_URL)) {
-                return $fullTag;
-            }
-
-            $trackedUrl = route('track.click', [
-                'id' => $this->queueId,
-                'url' => $href,
-            ]);
-
-            return str_replace($matches[2], e($trackedUrl), $fullTag);
-        }, $html) ?? $html;
-    }
 }
