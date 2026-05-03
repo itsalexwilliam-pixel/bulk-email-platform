@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Bulk Mailer') }}</title>
+    <script>
+        (function () {
+            var stored = localStorage.getItem('app_theme');
+            var allowed = ['light', 'dark', 'teal'];
+            var theme = allowed.includes(stored) ? stored : 'light';
+
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.classList.remove('theme-light', 'theme-dark', 'theme-teal');
+                document.body.classList.add('theme-' + theme);
+            });
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -19,7 +33,7 @@
         };
     </script>
 </head>
-<body class="h-full bg-slate-50 text-slate-700 dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
+<body class="h-full theme-light bg-slate-50 text-slate-700 dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
 <div class="min-h-screen">
     <x-saas-sidebar />
 
@@ -59,18 +73,36 @@
 <script>
 (function () {
     const root = document.documentElement;
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.classList.add('dark');
-    } else {
-        root.classList.remove('dark');
+    const body = document.body;
+    const allowedThemes = ['light', 'dark', 'teal'];
+
+    function normalizeTheme(theme) {
+        return allowedThemes.includes(theme) ? theme : 'light';
     }
 
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function () {
-            root.classList.toggle('dark');
-            localStorage.setItem('theme', root.classList.contains('dark') ? 'dark' : 'light');
+    window.applyAppTheme = function (theme) {
+        const normalized = normalizeTheme(theme);
+
+        localStorage.setItem('app_theme', normalized);
+        root.classList.toggle('dark', normalized === 'dark');
+
+        body.classList.remove('theme-light', 'theme-dark', 'theme-teal');
+        body.classList.add(`theme-${normalized}`);
+
+        const selector = document.getElementById('themeSelector');
+        if (selector && selector.value !== normalized) {
+            selector.value = normalized;
+        }
+    };
+
+    const initialTheme = normalizeTheme(localStorage.getItem('app_theme') || 'light');
+    window.applyAppTheme(initialTheme);
+
+    const selector = document.getElementById('themeSelector');
+    if (selector) {
+        selector.value = initialTheme;
+        selector.addEventListener('change', function () {
+            window.applyAppTheme(selector.value);
         });
     }
 
@@ -114,6 +146,17 @@
 
     document.querySelectorAll('form').forEach((form) => {
         form.addEventListener('submit', function () {
+            const method = (form.getAttribute('method') || 'GET').toUpperCase();
+            const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+            if (!isMutating) {
+                return;
+            }
+
+            if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                return;
+            }
+
             const btn = form.querySelector('button[type="submit"]');
             if (btn) {
                 btn.dataset.originalText = btn.innerHTML;

@@ -5,6 +5,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SMTPController;
 use App\Http\Controllers\SendController;
 use App\Http\Controllers\SettingsController;
@@ -28,6 +29,7 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth')->group(function () {
     Route::resource('contacts', ContactController::class)->except(['show']);
+    Route::post('/contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
     Route::resource('groups', GroupController::class)->only(['index', 'store', 'destroy']);
     Route::resource('campaigns', CampaignController::class)->except(['show']);
     Route::get('/campaigns/{campaign}/live-stats', [CampaignController::class, 'liveStats'])->name('campaigns.live-stats');
@@ -52,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
     Route::get('/single-email', [SingleEmailController::class, 'create'])->name('single-email.create');
     Route::post('/single-email', [SingleEmailController::class, 'store'])->name('single-email.store');
-    Route::view('/reports', 'reports.index')->name('reports.index');
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');

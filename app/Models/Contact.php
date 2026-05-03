@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Contact extends Model
 {
-    protected $fillable = ['name', 'email'];
+    protected $fillable = ['account_id', 'name', 'email'];
 
     public function groups(): BelongsToMany
     {

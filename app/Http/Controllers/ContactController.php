@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Contact;
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ContactController extends Controller
@@ -30,7 +31,10 @@ class ContactController extends Controller
             'groups.*' => ['exists:groups,id'],
         ]);
 
+        $accountId = (int) ($request->user()?->account_id ?? 0);
+
         $contact = Contact::create([
+            'account_id' => $accountId,
             'name' => $data['name'],
             'email' => $data['email'],
         ]);
@@ -63,6 +67,7 @@ class ContactController extends Controller
         ]);
 
         $contact->update([
+            'account_id' => (int) ($request->user()?->account_id ?? $contact->account_id),
             'name' => $data['name'],
             'email' => $data['email'],
         ]);
@@ -76,5 +81,36 @@ class ContactController extends Controller
     {
         $contact->delete();
         return redirect()->route('contacts.index')->with('success', 'Contact deleted successfully.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', 'exists:contacts,id'],
+        ]);
+
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $ids = $data['ids'];
+
+        $validIds = Contact::where('account_id', $accountId)
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->toArray();
+
+        if (count($validIds) === 0) {
+            return back()->withErrors([
+                'ids' => 'No valid contacts selected for deletion.',
+            ]);
+        }
+
+        $deleted = Contact::whereIn('id', $validIds)->delete();
+
+        Log::info('Bulk contact delete completed', [
+            'account_id' => $accountId,
+            'count_deleted' => $deleted,
+        ]);
+
+        return back()->with('success', "{$deleted} contact(s) deleted successfully.");
     }
 }

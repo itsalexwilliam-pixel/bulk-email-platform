@@ -19,7 +19,7 @@ class ProcessCampaignQueueJob implements ShouldQueue
 
     public function __construct(
         public int $campaignId,
-        public int $limit = 60
+        public ?int $limit = null
     ) {
     }
 
@@ -32,9 +32,15 @@ class ProcessCampaignQueueJob implements ShouldQueue
         }
 
         try {
-            Artisan::call('queue:work-mails', [
-                '--limit' => $this->limit,
-            ]);
+            $options = [
+                '--campaign_id' => $this->campaignId,
+            ];
+
+            if (!is_null($this->limit)) {
+                $options['--limit'] = $this->limit;
+            }
+
+            Artisan::call('queue:work-mails', $options);
         } finally {
             Cache::forget($lockKey);
         }

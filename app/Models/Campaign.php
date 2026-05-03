@@ -17,6 +17,7 @@ class Campaign extends Model
     ];
 
     protected $fillable = [
+        'account_id',
         'name',
         'subject',
         'body',
@@ -27,12 +28,14 @@ class Campaign extends Model
         'warmup_enabled',
         'warmup_day',
         'warmup_started_at',
+        'emails_per_minute',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'warmup_enabled' => 'boolean',
         'warmup_started_at' => 'datetime',
+        'emails_per_minute' => 'integer',
     ];
 
     public function contacts(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

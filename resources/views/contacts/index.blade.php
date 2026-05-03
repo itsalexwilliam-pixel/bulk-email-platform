@@ -50,19 +50,22 @@
             </select>
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-2">
-            <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                <input type="checkbox" id="selectAllContacts" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                Select all on page
-            </label>
-            <div class="flex items-center gap-2">
-                <button type="button" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">Assign Group</button>
-                <button type="button" class="px-3 py-2 rounded-lg border border-rose-300 text-rose-600 text-xs font-medium hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">Delete Selected</button>
-            </div>
-        </div>
+        <form method="POST" action="{{ route('contacts.bulk-delete') }}" id="bulkDeleteForm">
+            @csrf
 
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-            <table class="w-full text-sm" id="contactsTable">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <input type="checkbox" id="selectAllContacts" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    Select all on page
+                </label>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">Assign Group</button>
+                    <button id="deleteSelectedBtn" type="submit" disabled class="px-3 py-2 rounded-lg border border-rose-300 text-rose-600 text-xs font-medium hover:bg-rose-50 dark:hover:bg-rose-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed">Delete Selected</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                <table class="w-full text-sm" id="contactsTable">
                 <thead class="bg-slate-50 dark:bg-slate-800/50">
                     <tr class="text-left text-slate-500 dark:text-slate-400">
                         <th class="py-3 px-4 w-10"></th>
@@ -76,7 +79,7 @@
                     @forelse($contacts as $contact)
                         <tr class="border-t border-slate-100 dark:border-slate-800 contact-row hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition">
                             <td class="py-3 px-4">
-                                <input type="checkbox" class="contact-checkbox rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <input type="checkbox" name="ids[]" value="{{ $contact->id }}" class="contact-checkbox rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                             </td>
                             <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-100 contact-name">{{ $contact->name }}</td>
                             <td class="py-3 px-4 text-slate-600 dark:text-slate-300 contact-email">{{ $contact->email }}</td>
@@ -112,7 +115,8 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
+            </div>
+        </form>
 
         <div>
             {{ $contacts->links() }}
@@ -137,8 +141,51 @@
 
     const selectAll = document.getElementById('selectAllContacts');
     const checkboxes = document.querySelectorAll('.contact-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+    function getSelectedCount() {
+        return Array.from(checkboxes).filter(cb => cb.checked).length;
+    }
+
+    function syncBulkDeleteState() {
+        const count = getSelectedCount();
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.disabled = count === 0;
+            deleteSelectedBtn.textContent = count > 0 ? `Delete Selected (${count})` : 'Delete Selected';
+        }
+    }
+
     selectAll?.addEventListener('change', function () {
-        checkboxes.forEach(cb => cb.checked = this.checked);
+        checkboxes.forEach(cb => {
+            cb.checked = this.checked;
+        });
+        syncBulkDeleteState();
     });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (!cb.checked && selectAll) {
+                selectAll.checked = false;
+            } else if (selectAll) {
+                selectAll.checked = getSelectedCount() === checkboxes.length;
+            }
+            syncBulkDeleteState();
+        });
+    });
+
+    bulkDeleteForm?.addEventListener('submit', function (e) {
+        const count = getSelectedCount();
+        if (count === 0) {
+            e.preventDefault();
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to delete ${count} contacts?`)) {
+            e.preventDefault();
+        }
+    });
+
+    syncBulkDeleteState();
 </script>
 @endpush

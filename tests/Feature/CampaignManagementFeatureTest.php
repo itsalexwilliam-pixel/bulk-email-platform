@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\Campaign;
 use App\Models\Contact;
 use App\Models\Group;
@@ -15,9 +16,22 @@ class CampaignManagementFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Account $account;
+    private User $user;
+
     private function actingAsUser(): void
     {
-        $this->actingAs(User::factory()->create());
+        $this->account = Account::create([
+            'name' => 'Test Account',
+            'slug' => 'test-account',
+            'status' => 'active',
+        ]);
+
+        $this->user = User::factory()->create([
+            'account_id' => $this->account->id,
+        ]);
+
+        $this->actingAs($this->user);
     }
 
     public function test_create_campaign_as_draft(): void
@@ -43,18 +57,18 @@ class CampaignManagementFeatureTest extends TestCase
     {
         $this->actingAsUser();
 
-        $manual = Contact::create(['name' => 'Manual', 'email' => 'manual@example.com']);
-        $groupContact = Contact::create(['name' => 'Grouped', 'email' => 'grouped@example.com']);
-        $overlap = Contact::create(['name' => 'Overlap', 'email' => 'overlap@example.com']);
+        $manual = Contact::create(['account_id' => $this->account->id, 'name' => 'Manual', 'email' => 'manual@example.com']);
+        $groupContact = Contact::create(['account_id' => $this->account->id, 'name' => 'Grouped', 'email' => 'grouped@example.com']);
+        $overlap = Contact::create(['account_id' => $this->account->id, 'name' => 'Overlap', 'email' => 'overlap@example.com']);
 
-        $group = Group::create(['name' => 'Leads']);
+        $group = Group::create(['account_id' => $this->account->id, 'name' => 'Leads']);
         $group->contacts()->sync([$groupContact->id, $overlap->id]);
 
         $response = $this->post(route('campaigns.store'), [
             'name' => 'Merge Test',
             'subject' => 'Merge Subject',
             'body' => '<p>Body</p>',
-            'contact_ids' => [$manual->id, $overlap->id],
+            'contact_ids' => [$manual->id, $groupContact->id, $overlap->id],
             'group_ids' => [$group->id],
         ]);
 
@@ -73,10 +87,11 @@ class CampaignManagementFeatureTest extends TestCase
     {
         $this->actingAsUser();
 
-        $contactA = Contact::create(['name' => 'A', 'email' => 'a@example.com']);
-        $contactB = Contact::create(['name' => 'B', 'email' => 'b@example.com']);
+        $contactA = Contact::create(['account_id' => $this->account->id, 'name' => 'A', 'email' => 'a@example.com']);
+        $contactB = Contact::create(['account_id' => $this->account->id, 'name' => 'B', 'email' => 'b@example.com']);
 
         $campaign = Campaign::create([
+            'account_id' => $this->account->id,
             'name' => 'Old Name',
             'subject' => 'Old Subject',
             'body' => '<p>Old</p>',
@@ -156,6 +171,7 @@ class CampaignManagementFeatureTest extends TestCase
         $this->actingAsUser();
 
         $campaign = Campaign::create([
+            'account_id' => $this->account->id,
             'name' => 'Delete Me',
             'subject' => 'Delete Subject',
             'body' => '<p>Delete</p>',

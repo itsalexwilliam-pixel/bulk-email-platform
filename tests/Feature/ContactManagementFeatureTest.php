@@ -7,15 +7,22 @@ use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ContactManagementFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function actingAsUser(): User
+    private function actingAsUser(?int $accountId = null): User
     {
-        $user = User::factory()->create();
+        if ($accountId === null) {
+            $accountId = $this->createAccountId();
+        }
+
+        $user = User::factory()->create([
+            'account_id' => $accountId,
+        ]);
 
         $this->actingAs($user);
 
@@ -188,6 +195,97 @@ class ContactManagementFeatureTest extends TestCase
         $this->assertDatabaseHas('contact_group', [
             'contact_id' => $validTwo->id,
             'group_id' => $group->id,
+        ]);
+    }
+
+    public function test_bulk_delete_success_same_account(): void
+    {
+        $accountId = $this->createAccountId();
+        $user = $this->actingAsUser($accountId);
+
+        $c1 = Contact::create(['account_id' => $user->account_id, 'name' => 'A', 'email' => 'a@example.com']);
+        $c2 = Contact::create(['account_id' => $user->account_id, 'name' => 'B', 'email' => 'b@example.com']);
+
+        $response = $this->post(route('contacts.bulk-delete'), [
+            'ids' => [$c1->id, $c2->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('contacts', ['id' => $c1->id]);
+        $this->assertDatabaseMissing('contacts', ['id' => $c2->id]);
+    }
+
+    public function test_bulk_delete_empty_selection_rejected(): void
+    {
+        $this->actingAsUser();
+
+        $response = $this->post(route('contacts.bulk-delete'), [
+            'ids' => [],
+        ]);
+
+        $response->assertSessionHasErrors(['ids']);
+    }
+
+    public function test_bulk_delete_cross_account_ids_not_deleted(): void
+    {
+        $accountA = $this->createAccountId();
+        $accountB = $this->createAccountId();
+
+        $this->actingAsUser($accountA);
+
+        $foreignContact = Contact::create([
+            'account_id' => $accountB,
+            'name' => 'Foreign',
+            'email' => 'foreign@example.com',
+        ]);
+
+        $response = $this->post(route('contacts.bulk-delete'), [
+            'ids' => [$foreignContact->id],
+        ]);
+
+        $response->assertSessionHasErrors(['ids']);
+        $this->assertDatabaseHas('contacts', ['id' => $foreignContact->id]);
+    }
+
+    public function test_bulk_delete_partial_valid_ids(): void
+    {
+        $accountA = $this->createAccountId();
+        $accountB = $this->createAccountId();
+
+        $user = $this->actingAsUser($accountA);
+
+        $ownContact = Contact::create([
+            'account_id' => $user->account_id,
+            'name' => 'Own',
+            'email' => 'own@example.com',
+        ]);
+
+        $foreignContact = Contact::create([
+            'account_id' => $accountB,
+            'name' => 'Foreign',
+            'email' => 'foreign2@example.com',
+        ]);
+
+        $response = $this->post(route('contacts.bulk-delete'), [
+            'ids' => [$ownContact->id, $foreignContact->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('contacts', ['id' => $ownContact->id]);
+        $this->assertDatabaseHas('contacts', ['id' => $foreignContact->id]);
+    }
+
+    private function createAccountId(): int
+    {
+        return (int) DB::table('accounts')->insertGetId([
+            'name' => 'Test Account '.uniqid(),
+            'plan_id' => DB::table('plans')->value('id'),
+            'owner_user_id' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

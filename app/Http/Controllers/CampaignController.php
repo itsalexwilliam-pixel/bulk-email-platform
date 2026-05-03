@@ -16,7 +16,11 @@ class CampaignController extends Controller
 {
     public function index()
     {
-        $campaigns = Campaign::withCount('contacts')
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+
+        $campaigns = Campaign::query()
+            ->where('account_id', $accountId)
+            ->withCount('contacts')
             ->withCount([
                 'emailQueue as queued_count' => fn($q) => $q->whereIn('status', ['queued', 'pending']),
                 'emailQueue as sent_count' => fn($q) => $q->where('status', 'sent'),
@@ -43,6 +47,9 @@ class CampaignController extends Controller
 
     public function liveStats(Campaign $campaign)
     {
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
         $queued = $campaign->emailQueue()->whereIn('status', ['queued', 'pending'])->count();
         $sent = $campaign->emailQueue()->where('status', 'sent')->count();
         $failed = $campaign->emailQueue()->where('status', 'failed')->count();
@@ -82,8 +89,10 @@ class CampaignController extends Controller
 
     public function create()
     {
-        $contacts = Contact::orderBy('name')->get();
-        $groups = Group::orderBy('name')->get();
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+
+        $contacts = Contact::query()->where('account_id', $accountId)->orderBy('name')->get();
+        $groups = Group::query()->where('account_id', $accountId)->orderBy('name')->get();
 
         $warmupSchedule = Campaign::WARMUP_SCHEDULE;
 
@@ -103,6 +112,7 @@ class CampaignController extends Controller
             'group_ids.*' => ['integer', 'exists:groups,id'],
             'attachment' => ['nullable', 'file', 'max:10240'],
             'warmup_enabled' => ['nullable', 'boolean'],
+            'emails_per_minute' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
         $attachmentPath = null;
@@ -114,7 +124,15 @@ class CampaignController extends Controller
             $attachmentName = $file->getClientOriginalName();
         }
 
+        $accountId = (int) ($request->user()?->account_id ?? 0);
+        if ($accountId <= 0) {
+            return back()
+                ->withInput()
+                ->withErrors(['campaign' => 'Missing account context. Please login again and retry.']);
+        }
+
         $campaign = new Campaign();
+        $campaign->account_id = $accountId;
         $campaign->name = $data['name'];
         $campaign->subject = $data['subject'];
         $campaign->body = $data['body'];
@@ -123,6 +141,7 @@ class CampaignController extends Controller
         $campaign->scheduled_at = $data['scheduled_at'] ?? null;
         $campaign->status = !empty($data['scheduled_at']) ? 'scheduled' : 'draft';
         $campaign->warmup_enabled = $request->boolean('warmup_enabled');
+        $campaign->emails_per_minute = $data['emails_per_minute'] ?? null;
         $campaign->warmup_day = $campaign->warmup_day ?: 1;
 
         if ($campaign->warmup_enabled && empty($campaign->warmup_started_at)) {
@@ -131,10 +150,18 @@ class CampaignController extends Controller
 
         $campaign->save();
 
-        $contactIds = collect($data['contact_ids'] ?? []);
-        $groupContactIds = Contact::whereHas('groups', function ($query) use ($data) {
-            $query->whereIn('groups.id', $data['group_ids'] ?? []);
-        })->pluck('contacts.id');
+        $contactIds = Contact::query()
+            ->where('account_id', $accountId)
+            ->whereIn('id', collect($data['contact_ids'] ?? [])->map(fn ($id) => (int) $id)->all())
+            ->pluck('id');
+
+        $groupContactIds = Contact::query()
+            ->where('account_id', $accountId)
+            ->whereHas('groups', function ($query) use ($data, $accountId) {
+                $query->where('groups.account_id', $accountId)
+                    ->whereIn('groups.id', $data['group_ids'] ?? []);
+            })
+            ->pluck('contacts.id');
 
         $finalIds = $contactIds->merge($groupContactIds)->unique()->values()->all();
         $campaign->contacts()->sync($finalIds);
@@ -144,9 +171,12 @@ class CampaignController extends Controller
 
     public function edit(Campaign $campaign)
     {
-        $contacts = Contact::orderBy('name')->get();
-        $groups = Group::orderBy('name')->get();
-        $selectedContactIds = $campaign->contacts()->pluck('contacts.id')->toArray();
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
+        $contacts = Contact::query()->where('account_id', $accountId)->orderBy('name')->get();
+        $groups = Group::query()->where('account_id', $accountId)->orderBy('name')->get();
+        $selectedContactIds = $campaign->contacts()->where('contacts.account_id', $accountId)->pluck('contacts.id')->toArray();
 
         $warmupSchedule = Campaign::WARMUP_SCHEDULE;
 
@@ -155,6 +185,9 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign)
     {
+        $accountId = (int) ($request->user()?->account_id ?? 0);
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
@@ -167,6 +200,7 @@ class CampaignController extends Controller
             'attachment' => ['nullable', 'file', 'max:10240'],
             'remove_attachment' => ['nullable', 'boolean'],
             'warmup_enabled' => ['nullable', 'boolean'],
+            'emails_per_minute' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
         $wasWarmupEnabled = (bool) $campaign->warmup_enabled;
@@ -179,6 +213,7 @@ class CampaignController extends Controller
             'scheduled_at' => $data['scheduled_at'] ?? null,
             'status' => !empty($data['scheduled_at']) ? 'scheduled' : 'draft',
             'warmup_enabled' => $isWarmupEnabled,
+            'emails_per_minute' => $data['emails_per_minute'] ?? null,
         ];
 
         if (!$wasWarmupEnabled && $isWarmupEnabled && empty($campaign->warmup_started_at)) {
@@ -205,10 +240,18 @@ class CampaignController extends Controller
 
         $campaign->update($updateData);
 
-        $contactIds = collect($data['contact_ids'] ?? []);
-        $groupContactIds = Contact::whereHas('groups', function ($query) use ($data) {
-            $query->whereIn('groups.id', $data['group_ids'] ?? []);
-        })->pluck('contacts.id');
+        $contactIds = Contact::query()
+            ->where('account_id', $accountId)
+            ->whereIn('id', collect($data['contact_ids'] ?? [])->map(fn ($id) => (int) $id)->all())
+            ->pluck('id');
+
+        $groupContactIds = Contact::query()
+            ->where('account_id', $accountId)
+            ->whereHas('groups', function ($query) use ($data, $accountId) {
+                $query->where('groups.account_id', $accountId)
+                    ->whereIn('groups.id', $data['group_ids'] ?? []);
+            })
+            ->pluck('contacts.id');
 
         $finalIds = $contactIds->merge($groupContactIds)->unique()->values()->all();
         $campaign->contacts()->sync($finalIds);
@@ -218,6 +261,9 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
+        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
         $campaign->delete();
 
         return redirect()->route('campaigns.index')->with('success', 'Campaign deleted successfully.');
@@ -225,11 +271,18 @@ class CampaignController extends Controller
 
     public function sendTestEmail(Request $request, Campaign $campaign)
     {
+        $accountId = (int) ($request->user()?->account_id ?? 0);
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
         $data = $request->validate([
             'test_email' => ['required', 'email'],
         ]);
 
-        $smtp = SmtpServer::where('is_active', 1)->orderByDesc('id')->first();
+        $smtp = SmtpServer::query()
+            ->where('account_id', $accountId)
+            ->where('is_active', 1)
+            ->orderByDesc('id')
+            ->first();
 
         if (!$smtp) {
             return back()->withErrors(['campaign_test_email' => 'No active SMTP server found. Please activate an SMTP server first.']);

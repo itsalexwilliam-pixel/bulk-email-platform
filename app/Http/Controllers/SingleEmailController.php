@@ -6,6 +6,7 @@ use App\Mail\SingleEmailMail;
 use App\Models\EmailQueue;
 use App\Models\SmtpServer;
 use App\Models\SmtpServerUsage;
+use App\Support\EmailHtmlPreprocessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,11 @@ class SingleEmailController extends Controller
             'from_name' => ['nullable', 'string', 'max:255'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png,gif,webp', 'max:10240'],
+            'utm_source' => ['nullable', 'string', 'max:255'],
+            'utm_medium' => ['nullable', 'string', 'max:255'],
+            'utm_campaign' => ['nullable', 'string', 'max:255'],
+            'utm_term' => ['nullable', 'string', 'max:255'],
+            'utm_content' => ['nullable', 'string', 'max:255'],
         ]);
 
         $smtp = SmtpServer::findOrFail($data['smtp_server_id']);
@@ -73,6 +79,12 @@ class SingleEmailController extends Controller
             }
         }
 
+        $rawMessage = $data['message'];
+        $hasTemplateHtml = preg_match('/<(html|head|body|table|style|div)\b/i', $rawMessage) === 1;
+        $processedMessage = $hasTemplateHtml
+            ? $rawMessage
+            : EmailHtmlPreprocessor::preprocess($rawMessage);
+
         $queueItem = EmailQueue::create([
             'campaign_id' => null,
             'contact_id' => null,
@@ -80,10 +92,15 @@ class SingleEmailController extends Controller
             'email' => $data['to'],
             'type' => 'single',
             'subject' => $data['subject'],
-            'body' => $data['message'],
+            'body' => $processedMessage,
             'from_email' => $data['from_email'] ?? null,
             'from_name' => $data['from_name'] ?? null,
             'attachments' => $storedAttachments,
+            'utm_source' => $data['utm_source'] ?? null,
+            'utm_medium' => $data['utm_medium'] ?? null,
+            'utm_campaign' => $data['utm_campaign'] ?? null,
+            'utm_term' => $data['utm_term'] ?? null,
+            'utm_content' => $data['utm_content'] ?? null,
             'status' => 'pending',
             'attempts' => 0,
             'last_error' => null,
@@ -93,11 +110,16 @@ class SingleEmailController extends Controller
         try {
             $this->applySmtpConfig($smtp, $data['from_email'] ?? null, $data['from_name'] ?? null);
 
+            Log::info('SingleEmail HTML Preview', [
+                'has_template_html' => $hasTemplateHtml,
+                'sample' => substr($processedMessage, 0, 500),
+            ]);
+
             Mail::to($data['to'])->send(
                 new SingleEmailMail(
                     queueItem: $queueItem,
                     subjectLine: $data['subject'],
-                    htmlBody: $data['message'],
+                    htmlBody: $processedMessage,
                     attachmentsMeta: $storedAttachments
                 )
             );
@@ -183,9 +205,8 @@ class SingleEmailController extends Controller
                 'created_at' => $now,
                 'updated_at' => $now,
             ]],
-            ['smtp_server_id', 'usage_date'],
+            ['smtp_server_id', 'account_id', 'usage_date'],
             [
-                'account_id' => $accountId,
                 'sent_count' => DB::raw('sent_count + '.$sentIncrement),
                 'fail_count' => DB::raw('fail_count + '.$failIncrement),
                 'updated_at' => $now,

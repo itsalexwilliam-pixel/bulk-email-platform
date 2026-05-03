@@ -1,3 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+}
+
+body.theme-light {
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+}
+
+body.theme-dark {
+    --bg: #0b1220;
+    --text: #e5e7eb;
+    --surface: #111827;
+    --border: #1f2937;
+}
+
+body.theme-teal {
+    --bg: #f0fdfa;
+    --text: #042f2e;
+    --surface: #ccfbf1;
+    --border: #99f6e4;
+}
+
+body[class*="theme-"] {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+body[class*="theme-"] #saas-sidebar {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+}
+
+body[class*="theme-"] #saas-sidebar a,
+body[class*="theme-"] #saas-sidebar button,
+body[class*="theme-"] #saas-sidebar p,
+body[class*="theme-"] #saas-sidebar span {
+    color: var(--text);
+}
+
+body[class*="theme-"] header.sticky.top-0 {
+    background-color: color-mix(in srgb, var(--surface) 88%, transparent) !important;
+    border-color: var(--border) !important;
+    color: var(--text);
+}

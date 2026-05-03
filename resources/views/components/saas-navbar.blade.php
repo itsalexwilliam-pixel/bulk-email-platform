@@ -13,10 +13,12 @@
                 <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
             </button>
 
-            <button type="button" id="themeToggle" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition" title="Toggle dark mode">
-                <svg id="themeIconSun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1m14.95 6.36l-.7-.7M6.4 6.4l-.7-.7m12.59 0l-.7.7M6.4 17.6l-.7.7M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
-                <svg id="themeIconMoon" class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
-            </button>
+            <label for="themeSelector" class="sr-only">Select theme</label>
+            <select id="themeSelector" class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/40">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="teal">Pro Teal</option>
+            </select>
 
             <details class="relative">
                 <summary class="list-none cursor-pointer">

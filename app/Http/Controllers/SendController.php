@@ -49,7 +49,7 @@ class SendController extends Controller
 
         $workerTriggered = false;
         if ($hasSendableQueue) {
-            ProcessCampaignQueueJob::dispatch($campaign->id, 60);
+            ProcessCampaignQueueJob::dispatch($campaign->id);
             $workerTriggered = true;
         }
 

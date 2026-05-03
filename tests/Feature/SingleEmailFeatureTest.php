@@ -179,7 +179,43 @@ class SingleEmailFeatureTest extends TestCase
         $mail = new SingleEmailMail($queue, 'Tracking Test', '<p><a href="https://example.com/path">Click me</a></p>', []);
         $html = $mail->render();
 
-        $this->assertStringContainsString(route('track.click', ['id' => $queue->id, 'url' => 'https://example.com/path']), $html);
+        $this->assertMatchesRegularExpression('/<a\s+[^>]*href=("|\')https?:\/\/[^"\']+\1[^>]*>/i', $html);
+        $this->assertStringContainsString('/track/click/', $html);
         $this->assertStringContainsString(route('track.open', ['id' => $queue->id]), $html);
+        $this->assertStringNotContainsString('&amp;', $html);
+        $this->assertMatchesRegularExpression('/href="[^"]+"/', $html);
+        $this->assertStringNotContainsString('/track/click?url=/unsubscribe', $html);
+    }
+
+    public function test_mailto_tel_and_unsubscribe_links_are_not_rewritten(): void
+    {
+        Storage::fake('local');
+
+        $account = $this->createAccount();
+        $user = $this->actingUserForAccount($account);
+        $smtp = $this->createSmtp($account);
+
+        $message = '<p>'
+            . '<a href="mailto:test@example.com">Mail</a> '
+            . '<a href="tel:+1234567890">Call</a> '
+            . '<a href="https://example.com/unsubscribe/me">Unsub</a> '
+            . '<a href="https://example.com/page">Page</a>'
+            . '</p>';
+
+        $this->actingAs($user)->post(route('single-email.store'), [
+            'to' => 'receiver@example.test',
+            'subject' => 'Protocol Test',
+            'message' => $message,
+            'smtp_server_id' => $smtp->id,
+        ]);
+
+        $queue = EmailQueue::query()->latest('id')->first();
+        $mail = new SingleEmailMail($queue, 'Protocol Test', $message, []);
+        $html = $mail->render();
+
+        $this->assertStringContainsString('href="mailto:test@example.com"', $html);
+        $this->assertStringContainsString('href="tel:+1234567890"', $html);
+        $this->assertStringContainsString('href="https://example.com/unsubscribe/me"', $html);
+        $this->assertStringContainsString(route('track.click', ['id' => $queue->id]), $html);
     }
 }

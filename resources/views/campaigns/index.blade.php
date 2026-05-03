@@ -33,6 +33,7 @@
                         <th class="py-3 px-4">Status</th>
                         <th class="py-3 px-4">Scheduled At</th>
                         <th class="py-3 px-4">Contacts</th>
+                        <th class="py-3 px-4">Speed</th>
                         <th class="py-3 px-4">Stats (Queue/Sent/Opened/Failed)</th>
                         <th class="py-3 px-4 text-right">Actions</th>
                     </tr>
@@ -51,6 +52,13 @@
                                 {{ $campaign->scheduled_at ? \Illuminate\Support\Carbon::parse($campaign->scheduled_at)->format('Y-m-d H:i') : '-' }}
                             </td>
                             <td class="py-3 px-4">{{ $campaign->contacts_count }}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                @if(!is_null($campaign->emails_per_minute))
+                                    {{ (int) $campaign->emails_per_minute }} emails/min
+                                @else
+                                    Default
+                                @endif
+                            </td>
                             <td class="py-3 px-4">
                                 <div class="text-xs text-slate-700 dark:text-slate-200 space-y-1" id="campaign-stats-{{ $campaign->id }}">
                                     <div>Queued: <strong data-k="queued">{{ $campaign->queued_count ?? 0 }}</strong></div>
@@ -120,7 +128,7 @@
                             </td>
                         </tr>
                         <tr id="logs-row-{{ $campaign->id }}" class="hidden border-t border-slate-100 dark:border-slate-800">
-                            <td colspan="7" class="px-4 py-3">
+                            <td colspan="8" class="px-4 py-3">
                                 <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                                     <div class="text-sm font-semibold mb-2">Live Sending Logs (Campaign #{{ $campaign->id }})</div>
                                     <div class="overflow-x-auto">
@@ -145,7 +153,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-500">No campaigns found.</td>
+                            <td colspan="8" class="py-8 text-center text-slate-500">No campaigns found.</td>
                         </tr>
                     @endforelse
                 </tbody>
