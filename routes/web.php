@@ -4,6 +4,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactTagController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ProfileController;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
     Route::post('/contacts/bulk-assign-group', [ContactController::class, 'bulkAssignGroup'])->name('contacts.bulk-assign-group');
     Route::resource('contacts', ContactController::class)->except(['show']);
+    Route::post('/contacts/{contact}/tags', [ContactTagController::class, 'store'])->name('contacts.tags.store');
+    Route::delete('/contacts/{contact}/tags/{tag}', [ContactTagController::class, 'destroy'])->name('contacts.tags.destroy');
     Route::resource('groups', GroupController::class)->only(['index', 'store', 'destroy']);
     Route::resource('campaigns', CampaignController::class)->except(['show']);
     Route::get('/campaigns/{campaign}/live-stats', [CampaignController::class, 'liveStats'])->name('campaigns.live-stats');

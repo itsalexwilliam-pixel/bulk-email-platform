@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Contact extends Model
 {
@@ -23,5 +24,10 @@ class Contact extends Model
     public function emailQueue(): HasMany
     {
         return $this->hasMany(EmailQueue::class);
+    }
+
+    public function tags(): HasMany
+    {
+        return $this->hasMany(ContactTag::class);
     }
 }

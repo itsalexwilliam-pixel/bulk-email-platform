@@ -15,7 +15,7 @@ class ContactController extends Controller
 {
     public function index()
     {
-        $contacts = Contact::with('groups')->latest()->paginate(10);
+        $contacts = Contact::with('groups', 'tags')->latest()->paginate(10);
         $groups   = Group::orderBy('name')->get();
 
         // Open counts per contact

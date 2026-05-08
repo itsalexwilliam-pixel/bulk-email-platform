@@ -103,6 +103,7 @@
                         <th class="py-3 px-4">Email</th>
                         <th class="py-3 px-4">Website</th>
                         <th class="py-3 px-4">Groups</th>
+                        <th class="py-3 px-4">Tags</th>
                         <th class="py-3 px-4 text-center">Opens</th>
                         <th class="py-3 px-4 w-44">Actions</th>
                     </tr>
@@ -131,6 +132,36 @@
                                 @empty
                                     <span class="text-xs text-slate-400">No groups</span>
                                 @endforelse
+                            </td>
+                            {{-- Tags --}}
+                            <td class="py-3 px-4">
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    @foreach($contact->tags as $tag)
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                                            {{ $tag->tag }}
+                                            <form method="POST" action="{{ route('contacts.tags.destroy', [$contact, $tag]) }}" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="hover:text-rose-500 leading-none" title="Remove tag">&times;</button>
+                                            </form>
+                                        </span>
+                                    @endforeach
+                                    <button type="button"
+                                            onclick="toggleTagForm({{ $contact->id }})"
+                                            class="inline-flex items-center justify-center w-5 h-5 rounded-full border border-dashed border-slate-400 text-slate-400 hover:border-violet-500 hover:text-violet-500 transition text-xs leading-none">
+                                        +
+                                    </button>
+                                </div>
+                                <form id="tag-form-{{ $contact->id }}"
+                                      method="POST"
+                                      action="{{ route('contacts.tags.store', $contact) }}"
+                                      class="hidden mt-1 flex gap-1">
+                                    @csrf
+                                    <input type="text" name="tag" placeholder="Add tag..."
+                                           maxlength="60"
+                                           class="w-28 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                           onkeydown="if(event.key==='Escape') toggleTagForm({{ $contact->id }})">
+                                    <button type="submit" class="px-2 py-1 rounded-lg bg-violet-600 text-white text-xs hover:bg-violet-700 transition">Add</button>
+                                </form>
                             </td>
                             <td class="py-3 px-4 text-center">
                                 @if(($contact->sent_count ?? 0) > 0)
@@ -161,7 +192,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="py-8 text-center text-slate-500">No contacts found.</td>
+                            <td colspan="9" class="py-8 text-center text-slate-500">No contacts found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -230,6 +261,16 @@
 
 @push('scripts')
 <script>
+    // ── Contact Tags ──────────────────────────────────────────────────────────
+    function toggleTagForm(contactId) {
+        const form = document.getElementById('tag-form-' + contactId);
+        if (!form) return;
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            form.querySelector('input[name="tag"]').focus();
+        }
+    }
+
     const TOTAL_CONTACTS = {{ $totalContacts }};
     const PAGE_COUNT     = {{ $contacts->count() }};
 
