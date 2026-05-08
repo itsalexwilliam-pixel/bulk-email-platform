@@ -168,6 +168,47 @@
                 </div>
             </div>
 
+            {{-- A/B Test section --}}
+            <div class="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-50/70 dark:bg-purple-950/30 p-4 space-y-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-purple-900 dark:text-purple-200 cursor-pointer">
+                    <input type="checkbox" name="ab_enabled" value="1" id="abEnabledCheck"
+                           @checked(old('ab_enabled', $campaign->ab_enabled))
+                           class="rounded border-slate-300 dark:border-slate-700 text-purple-600 focus:ring-purple-500">
+                    Enable A/B Subject Test
+                </label>
+                <p class="text-xs text-purple-700 dark:text-purple-300">Send two variants to split the audience 50/50. Track which subject line gets more opens.</p>
+
+                <div id="abVariantBFields" class="{{ old('ab_enabled', $campaign->ab_enabled) ? '' : 'hidden' }} space-y-3 border-t border-purple-200 dark:border-purple-800 pt-3 mt-1">
+                    <div class="rounded-lg bg-purple-100/60 dark:bg-purple-900/30 px-3 py-2 text-xs text-purple-800 dark:text-purple-300 font-medium">
+                        Variant A → uses the Subject &amp; Email Body above.<br>
+                        Variant B → uses the subject &amp; body below (sent to ~50% of contacts).
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Variant B — Subject</label>
+                        <input type="text" name="ab_subject_b" id="abSubjectB"
+                               value="{{ old('ab_subject_b', $campaign->ab_subject_b) }}"
+                               class="w-full rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                               placeholder="Alternative subject line for Variant B…">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Variant B — Email Body</label>
+                        <div class="flex gap-1 mb-2">
+                            <button type="button" id="abTabRichText"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white transition">
+                                ✏️ Rich Text
+                            </button>
+                            <button type="button" id="abTabHtml"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                &lt;/&gt; HTML
+                            </button>
+                        </div>
+                        <textarea name="ab_body_b" id="ab-body-editor" class="sr-only">{!! str_replace('</textarea>', '<\/textarea>', old('ab_body_b', $campaign->ab_body_b ?? '')) !!}</textarea>
+                        <div id="ab-quill-editor" style="height:300px;" class="rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-950"></div>
+                        <textarea id="ab-html-editor" style="height:300px;" class="hidden w-full rounded-xl border border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" placeholder="Paste Variant B HTML here…"></textarea>
+                    </div>
+                </div>
+            </div>
+
             <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4">
                 <label class="block text-sm font-semibold mb-1 text-indigo-900 dark:text-indigo-200">Select Lists (Groups) <span class="text-rose-600">*</span></label>
                 <select id="groupIdsSelect" name="group_ids[]" multiple size="8" required
@@ -503,6 +544,83 @@
     groupIdsSelect?.addEventListener('input', updateGroupSelectionState);
     manualContactIdsSelect?.addEventListener('change', updateGroupMembersPreview);
     updateGroupSelectionState();
+
+    // ── A/B Variant B Editor ─────────────────────────────────────────────────
+    const abEnabledCheck    = document.getElementById('abEnabledCheck');
+    const abVariantBFields  = document.getElementById('abVariantBFields');
+    const abBodyTextarea    = document.getElementById('ab-body-editor');
+    const abHtmlEditor      = document.getElementById('ab-html-editor');
+    const abQuillEl         = document.getElementById('ab-quill-editor');
+    const abTabRichText     = document.getElementById('abTabRichText');
+    const abTabHtml         = document.getElementById('abTabHtml');
+
+    const abQuill = new Quill('#ab-quill-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, 4, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ color: [] }],
+                [{ align: [] }],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean'],
+            ],
+        },
+    });
+
+    let abExisting = abBodyTextarea.value.trim();
+    if (abExisting) {
+        if (abExisting.includes('&lt;') || abExisting.includes('&gt;')) {
+            abExisting = unescapeHtml(abExisting);
+            abBodyTextarea.value = abExisting;
+        }
+        abQuill.clipboard.dangerouslyPasteHTML(abExisting);
+        abHtmlEditor.value = abExisting;
+    }
+
+    abQuill.on('text-change', function () {
+        if (abHtmlEditor.classList.contains('hidden')) {
+            abBodyTextarea.value = abQuill.root.innerHTML;
+        }
+    });
+    abHtmlEditor?.addEventListener('input', function () {
+        if (abQuillEl.classList.contains('hidden')) {
+            abBodyTextarea.value = abHtmlEditor.value;
+        }
+    });
+
+    const abActiveTab   = 'bg-purple-600 text-white';
+    const abInactiveTab = 'border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+
+    abTabRichText?.addEventListener('click', function () {
+        abQuill.clipboard.dangerouslyPasteHTML(abHtmlEditor.value || '');
+        abQuillEl.classList.remove('hidden');
+        abHtmlEditor.classList.add('hidden');
+        abTabRichText.className = `px-3 py-1.5 rounded-lg text-xs font-medium transition ${abActiveTab}`;
+        abTabHtml.className     = `px-3 py-1.5 rounded-lg text-xs font-medium transition ${abInactiveTab}`;
+    });
+    abTabHtml?.addEventListener('click', function () {
+        abHtmlEditor.value = abQuill.root.innerHTML;
+        abBodyTextarea.value = abHtmlEditor.value;
+        abHtmlEditor.classList.remove('hidden');
+        abQuillEl.classList.add('hidden');
+        abTabHtml.className     = `px-3 py-1.5 rounded-lg text-xs font-medium transition ${abActiveTab}`;
+        abTabRichText.className = `px-3 py-1.5 rounded-lg text-xs font-medium transition ${abInactiveTab}`;
+    });
+
+    abEnabledCheck?.addEventListener('change', function () {
+        abVariantBFields?.classList.toggle('hidden', !this.checked);
+    });
+
+    document.querySelector('form[method="POST"]').addEventListener('submit', function () {
+        if (abEnabledCheck?.checked) {
+            const abContent = abHtmlEditor.classList.contains('hidden')
+                ? abQuill.root.innerHTML
+                : abHtmlEditor.value;
+            abBodyTextarea.value = abContent;
+        }
+    });
 
     // ── Load Template modal ───────────────────────────────────────────────────
     const loadTemplateBtn = document.getElementById('loadTemplateBtn');

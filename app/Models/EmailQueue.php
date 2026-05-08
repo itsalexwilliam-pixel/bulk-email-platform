@@ -15,6 +15,7 @@ class EmailQueue extends Model
         'smtp_server_id',
         'email',
         'type',
+        'ab_variant',
         'subject',
         'body',
         'from_email',

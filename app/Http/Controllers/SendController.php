@@ -13,8 +13,29 @@ class SendController extends Controller
         $accountId = (int) ($campaign->account_id ?? auth()->user()?->account_id ?? 0);
         $contacts = $campaign->contacts()->get(['contacts.id', 'contacts.email']);
 
+        // A/B split: sort by contact ID for deterministic assignment, then split 50/50
+        $abEnabled = (bool) $campaign->ab_enabled
+            && !empty($campaign->ab_subject_b)
+            && !empty($campaign->ab_body_b);
+
+        $sortedContacts = $contacts->sortBy('id')->values();
+        $totalCount = $sortedContacts->count();
+        $splitAt = (int) ceil($totalCount / 2); // first half = A, second half = B
+
         $inserted = 0;
-        foreach ($contacts as $contact) {
+        foreach ($sortedContacts as $index => $contact) {
+            $abVariant = null;
+            $subject = $campaign->subject;
+            $body = $campaign->body;
+
+            if ($abEnabled) {
+                $abVariant = ($index < $splitAt) ? 'a' : 'b';
+                if ($abVariant === 'b') {
+                    $subject = $campaign->ab_subject_b;
+                    $body    = $campaign->ab_body_b;
+                }
+            }
+
             $queue = EmailQueue::firstOrCreate(
                 [
                     'campaign_id' => $campaign->id,
@@ -24,9 +45,10 @@ class SendController extends Controller
                     'account_id' => $accountId,
                     'email' => $contact->email,
                     'type' => 'campaign',
-                    'subject' => $campaign->subject,
-                    'body' => $campaign->body,
-                    'body_snapshot' => $campaign->body,
+                    'ab_variant' => $abVariant,
+                    'subject' => $subject,
+                    'body' => $body,
+                    'body_snapshot' => $body,
                     'status' => 'pending',
                     'attempts' => 0,
                 ]
@@ -38,9 +60,10 @@ class SendController extends Controller
                 $queue->update([
                     'account_id' => $accountId,
                     'type' => 'campaign',
-                    'subject' => $campaign->subject,
-                    'body' => $campaign->body,
-                    'body_snapshot' => $campaign->body,
+                    'ab_variant' => $abVariant,
+                    'subject' => $subject,
+                    'body' => $body,
+                    'body_snapshot' => $body,
                     'status' => 'pending',
                     'last_error' => null,
                 ]);

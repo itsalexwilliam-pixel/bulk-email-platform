@@ -42,7 +42,12 @@
                     @forelse($campaigns as $campaign)
                         <tr class="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition">
                             <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{{ $campaign->name }}</td>
-                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ $campaign->subject }}</td>
+                            <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
+                                {{ $campaign->subject }}
+                                @if($campaign->ab_enabled)
+                                    <span class="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">A/B</span>
+                                @endif
+                            </td>
                             <td class="py-3 px-4">
                                 <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 uppercase">
                                     {{ $campaign->status }}
@@ -65,6 +70,13 @@
                                     <div>Sent: <strong data-k="sent">{{ $campaign->sent_count ?? 0 }}</strong></div>
                                     <div>Opened: <strong data-k="opened">{{ $campaign->opened_count ?? 0 }}</strong></div>
                                     <div>Failed: <strong data-k="failed">{{ $campaign->failed_count ?? 0 }}</strong></div>
+                                    @if($campaign->ab_enabled)
+                                        <div class="pt-1 border-t border-slate-200 dark:border-slate-700">
+                                            <span class="text-purple-600 dark:text-purple-400 font-semibold">A/B:</span>
+                                            <span class="text-purple-700 dark:text-purple-300">A opens: <strong data-k="ab_a_opens">—</strong></span>
+                                            <span class="ml-1 text-purple-700 dark:text-purple-300">B opens: <strong data-k="ab_b_opens">—</strong></span>
+                                        </div>
+                                    @endif
                                 </div>
                             </td>
                             <td class="py-3 px-4">
@@ -192,6 +204,10 @@
             statsWrap.querySelector('[data-k="sent"]').textContent = data.stats.sent ?? 0;
             statsWrap.querySelector('[data-k="opened"]').textContent = data.stats.opened ?? 0;
             statsWrap.querySelector('[data-k="failed"]').textContent = data.stats.failed ?? 0;
+            const abA = statsWrap.querySelector('[data-k="ab_a_opens"]');
+            const abB = statsWrap.querySelector('[data-k="ab_b_opens"]');
+            if (abA && data.stats.ab_a_opens !== null) abA.textContent = data.stats.ab_a_opens;
+            if (abB && data.stats.ab_b_opens !== null) abB.textContent = data.stats.ab_b_opens;
         }
 
         const logsBody = document.getElementById(`logs-body-${campaignId}`);

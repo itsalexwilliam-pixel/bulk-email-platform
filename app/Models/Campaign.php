@@ -29,6 +29,9 @@ class Campaign extends Model
         'warmup_day',
         'warmup_started_at',
         'emails_per_minute',
+        'ab_enabled',
+        'ab_subject_b',
+        'ab_body_b',
     ];
 
     protected $casts = [
@@ -36,6 +39,7 @@ class Campaign extends Model
         'warmup_enabled' => 'boolean',
         'warmup_started_at' => 'datetime',
         'emails_per_minute' => 'integer',
+        'ab_enabled' => 'boolean',
     ];
 
     public function contacts(): \Illuminate\Database\Eloquent\Relations\BelongsToMany

@@ -75,6 +75,18 @@ class CampaignController extends Controller
                 ];
             });
 
+        // A/B variant open counts
+        $abStats = null;
+        if ($campaign->ab_enabled) {
+            $abStats = EmailOpen::query()
+                ->join('email_queue', 'email_queue.id', '=', 'email_opens.email_queue_id')
+                ->where('email_queue.campaign_id', $campaign->id)
+                ->whereIn('email_queue.ab_variant', ['a', 'b'])
+                ->selectRaw('email_queue.ab_variant, COUNT(email_opens.id) as opens')
+                ->groupBy('email_queue.ab_variant')
+                ->pluck('opens', 'ab_variant');
+        }
+
         return response()->json([
             'campaign_id' => $campaign->id,
             'stats' => [
@@ -82,6 +94,8 @@ class CampaignController extends Controller
                 'sent' => $sent,
                 'opened' => $opened,
                 'failed' => $failed,
+                'ab_a_opens' => $abStats ? (int) ($abStats['a'] ?? 0) : null,
+                'ab_b_opens' => $abStats ? (int) ($abStats['b'] ?? 0) : null,
             ],
             'logs' => $logs,
         ]);
@@ -120,6 +134,9 @@ class CampaignController extends Controller
             'attachment' => ['nullable', 'file', 'max:10240'],
             'warmup_enabled' => ['nullable', 'boolean'],
             'emails_per_minute' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'ab_enabled' => ['nullable', 'boolean'],
+            'ab_subject_b' => ['nullable', 'string', 'max:255'],
+            'ab_body_b' => ['nullable', 'string'],
         ]);
 
         $attachmentPath = null;
@@ -132,6 +149,7 @@ class CampaignController extends Controller
         }
 
         $accountId = $this->getAccountId($request);
+        $abEnabled = $request->boolean('ab_enabled');
 
         $campaign = new Campaign();
         $campaign->account_id = $accountId;
@@ -145,6 +163,11 @@ class CampaignController extends Controller
         $campaign->warmup_enabled = $request->boolean('warmup_enabled');
         $campaign->emails_per_minute = $data['emails_per_minute'] ?? null;
         $campaign->warmup_day = $campaign->warmup_day ?: 1;
+        $campaign->ab_enabled = $abEnabled;
+        $campaign->ab_subject_b = $abEnabled ? ($data['ab_subject_b'] ?? null) : null;
+        $campaign->ab_body_b = $abEnabled && !empty($data['ab_body_b'])
+            ? html_entity_decode($data['ab_body_b'], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+            : null;
 
         if ($campaign->warmup_enabled && empty($campaign->warmup_started_at)) {
             $campaign->warmup_started_at = now();
@@ -208,10 +231,14 @@ class CampaignController extends Controller
             'remove_attachment' => ['nullable', 'boolean'],
             'warmup_enabled' => ['nullable', 'boolean'],
             'emails_per_minute' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'ab_enabled' => ['nullable', 'boolean'],
+            'ab_subject_b' => ['nullable', 'string', 'max:255'],
+            'ab_body_b' => ['nullable', 'string'],
         ]);
 
         $wasWarmupEnabled = (bool) $campaign->warmup_enabled;
         $isWarmupEnabled = $request->boolean('warmup_enabled');
+        $abEnabled = $request->boolean('ab_enabled');
 
         $updateData = [
             'name' => $data['name'],
@@ -221,6 +248,11 @@ class CampaignController extends Controller
             'status' => !empty($data['scheduled_at']) ? 'scheduled' : 'draft',
             'warmup_enabled' => $isWarmupEnabled,
             'emails_per_minute' => $data['emails_per_minute'] ?? null,
+            'ab_enabled' => $abEnabled,
+            'ab_subject_b' => $abEnabled ? ($data['ab_subject_b'] ?? null) : null,
+            'ab_body_b' => $abEnabled && !empty($data['ab_body_b'])
+                ? html_entity_decode($data['ab_body_b'], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                : null,
         ];
 
         if (!$wasWarmupEnabled && $isWarmupEnabled && empty($campaign->warmup_started_at)) {

@@ -23,8 +23,25 @@ class CampaignMail extends Mailable
     public function __construct(
         public Campaign $campaign,
         public Contact $contact,
-        public int $queueId
+        public int $queueId,
+        public ?string $abVariant = null
     ) {
+    }
+
+    private function effectiveSubject(): string
+    {
+        if ($this->abVariant === 'b' && !empty($this->campaign->ab_subject_b)) {
+            return (string) $this->campaign->ab_subject_b;
+        }
+        return (string) $this->campaign->subject;
+    }
+
+    private function effectiveBody(): string
+    {
+        if ($this->abVariant === 'b' && !empty($this->campaign->ab_body_b)) {
+            return (string) $this->campaign->ab_body_b;
+        }
+        return (string) $this->campaign->body;
     }
 
     public function envelope(): Envelope
@@ -32,7 +49,7 @@ class CampaignMail extends Mailable
         $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($this->contact->email)]);
 
         return new Envelope(
-            subject: $this->replaceMergeTags((string) $this->campaign->subject, $this->contact),
+            subject: $this->replaceMergeTags($this->effectiveSubject(), $this->contact),
             using: [
                 function (\Symfony\Component\Mime\Email $email) use ($unsubscribeUrl) {
                     $email->getHeaders()
@@ -45,7 +62,7 @@ class CampaignMail extends Mailable
 
     public function content(): Content
     {
-        $body = $this->replaceMergeTags((string) $this->campaign->body, $this->contact);
+        $body = $this->replaceMergeTags($this->effectiveBody(), $this->contact);
         $processedBody = EmailHtmlPreprocessor::preprocess($body);
         $normalizedHtml = $this->normalizeForEmailClient($processedBody);
         $inlineReadyHtml = $this->inlineCssForEmailClients($normalizedHtml);

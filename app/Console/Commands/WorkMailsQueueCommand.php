@@ -321,7 +321,7 @@ class WorkMailsQueueCommand extends Command
             ]);
 
             try {
-                Mail::to($item->email)->send(new CampaignMail($item->campaign, $item->contact, $item->id));
+                Mail::to($item->email)->send(new CampaignMail($item->campaign, $item->contact, $item->id, $item->ab_variant));
 
                 $item->update([
                     'status' => 'sent',
