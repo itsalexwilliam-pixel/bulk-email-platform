@@ -36,10 +36,12 @@ class UserManagementController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->withMessage('This email address is already registered. Each user must have a unique email.')],
-            'role' => ['required', Rule::in(['admin', 'manager', 'operator'])],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'role'     => ['required', Rule::in(['admin', 'manager', 'operator'])],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'email.unique' => 'This email address is already registered. Each user must have a unique email.',
         ]);
 
         User::create([
