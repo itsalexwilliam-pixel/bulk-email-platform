@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('queue:work-mails --limit=60')->everyMinute();
 Schedule::command('queue:process-drips')->everyMinute();
+Schedule::command('campaigns:dispatch-scheduled')->everyMinute();

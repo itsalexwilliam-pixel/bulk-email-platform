@@ -198,4 +198,51 @@ class ContactController extends Controller
 
         return back()->with('success', "{$deleted} contact(s) deleted successfully.");
     }
+
+    public function export()
+    {
+        $accountId = $this->currentAccountId();
+
+        $contacts = Contact::with('groups', 'tags')
+            ->where('account_id', $accountId)
+            ->orderBy('name')
+            ->get();
+
+        $filename = 'contacts_' . now()->format('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
+        ];
+
+        $callback = function () use ($contacts) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM for Excel UTF-8 compatibility
+            fputs($handle, "\xEF\xBB\xBF");
+
+            // Header row
+            fputcsv($handle, ['Name', 'Email', 'Business Name', 'Website', 'Groups', 'Tags', 'Is Bounced', 'Created At']);
+
+            foreach ($contacts as $contact) {
+                fputcsv($handle, [
+                    $contact->name ?? '',
+                    $contact->email ?? '',
+                    $contact->business_name ?? '',
+                    $contact->website ?? '',
+                    $contact->groups->pluck('name')->implode(', '),
+                    $contact->tags->pluck('tag')->implode(', '),
+                    $contact->is_bounced ? 'Yes' : 'No',
+                    $contact->created_at?->format('Y-m-d H:i:s') ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

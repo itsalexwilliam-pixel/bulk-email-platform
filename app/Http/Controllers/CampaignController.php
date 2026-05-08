@@ -307,6 +307,30 @@ class CampaignController extends Controller
         return redirect()->route('campaigns.index')->with('success', 'Campaign deleted successfully.');
     }
 
+    public function duplicate(Campaign $campaign)
+    {
+        $accountId = $this->currentAccountId();
+        abort_if((int) $campaign->account_id !== $accountId, 403);
+
+        $clone = $campaign->replicate(['warmup_started_at', 'warmup_day']);
+        $clone->name        = 'Copy of ' . $campaign->name;
+        $clone->status      = 'draft';
+        $clone->scheduled_at = null;
+        $clone->warmup_day  = 1;
+        $clone->warmup_started_at = null;
+        // Don't copy attachment — user should re-attach if needed
+        $clone->attachment_path = null;
+        $clone->attachment_name = null;
+        $clone->save();
+
+        // Copy contacts
+        $contactIds = $campaign->contacts()->pluck('contacts.id');
+        $clone->contacts()->sync($contactIds);
+
+        return redirect()->route('campaigns.edit', $clone)
+            ->with('success', 'Campaign duplicated. Review and update before sending.');
+    }
+
     public function sendTestEmail(Request $request, Campaign $campaign)
     {
         $accountId = $this->getAccountId($request);

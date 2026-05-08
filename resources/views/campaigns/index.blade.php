@@ -131,6 +131,13 @@
                                        class="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition">
                                         Edit
                                     </a>
+                                    <form action="{{ route('campaigns.duplicate', $campaign) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit"
+                                                class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition">
+                                            Duplicate
+                                        </button>
+                                    </form>
                                     <button type="button"
                                             class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium hover:bg-blue-200 transition"
                                             onclick="toggleLogs({{ $campaign->id }})">

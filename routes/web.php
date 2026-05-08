@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     })->name('contacts.bulk-delete.preview');
     Route::post('/contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
     Route::post('/contacts/bulk-assign-group', [ContactController::class, 'bulkAssignGroup'])->name('contacts.bulk-assign-group');
+    Route::get('/contacts/export', [ContactController::class, 'export'])->name('contacts.export');
     Route::resource('contacts', ContactController::class)->except(['show']);
     Route::post('/contacts/{contact}/tags', [ContactTagController::class, 'store'])->name('contacts.tags.store');
     Route::delete('/contacts/{contact}/tags/{tag}', [ContactTagController::class, 'destroy'])->name('contacts.tags.destroy');
@@ -50,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/campaigns/{campaign}/pause', [SendController::class, 'pause'])->middleware('throttle:30,1')->name('campaigns.pause');
     Route::post('/campaigns/{campaign}/resume', [SendController::class, 'resume'])->middleware('throttle:30,1')->name('campaigns.resume');
     Route::post('/campaigns/{campaign}/send-test-email', [CampaignController::class, 'sendTestEmail'])->name('campaigns.send-test-email');
+    Route::post('/campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
 
     Route::get('/smtp', [SMTPController::class, 'index'])->name('smtp.index');
     Route::post('/smtp', [SMTPController::class, 'store'])->name('smtp.store');
