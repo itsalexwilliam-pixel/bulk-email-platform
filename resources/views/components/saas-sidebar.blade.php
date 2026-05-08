@@ -5,6 +5,7 @@
         ['label' => 'Groups', 'route' => 'groups.index', 'icon' => 'M4 6h16M4 12h16M4 18h7'],
         ['label' => 'Campaigns', 'route' => 'campaigns.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
         ['label' => 'Templates', 'route' => 'templates.index', 'icon' => 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2'],
+        ['label' => 'Drip Campaigns', 'route' => 'drip.index', 'icon' => 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8'],
         ['label' => 'Automations', 'route' => null, 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
         ['label' => 'SMTP / Sending', 'route' => 'smtp.index', 'icon' => 'M3 8l7.89 4.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z'],
         ['label' => 'Send Single Email', 'route' => 'single-email.create', 'icon' => 'M4 4h16v16H4V4zm2 3v1h12V7H6zm0 3v7h12v-7H6zm2 2h8v1H8v-1zm0 2h6v1H8v-1z'],

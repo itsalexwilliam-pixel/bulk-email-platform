@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('queue:work-mails --limit=60')->everyMinute();
+Schedule::command('queue:process-drips')->everyMinute();

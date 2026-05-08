@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DripCampaignController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\BounceController;
 use App\Http\Controllers\ContactController;
@@ -80,6 +81,23 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Drip Campaigns
+    Route::get('/drip', [DripCampaignController::class, 'index'])->name('drip.index');
+    Route::get('/drip/create', [DripCampaignController::class, 'create'])->name('drip.create');
+    Route::post('/drip', [DripCampaignController::class, 'store'])->name('drip.store');
+    Route::get('/drip/{drip}', [DripCampaignController::class, 'show'])->name('drip.show');
+    Route::get('/drip/{drip}/edit', [DripCampaignController::class, 'edit'])->name('drip.edit');
+    Route::put('/drip/{drip}', [DripCampaignController::class, 'update'])->name('drip.update');
+    Route::delete('/drip/{drip}', [DripCampaignController::class, 'destroy'])->name('drip.destroy');
+    Route::post('/drip/{drip}/activate', [DripCampaignController::class, 'activate'])->name('drip.activate');
+    Route::post('/drip/{drip}/pause', [DripCampaignController::class, 'pause'])->name('drip.pause');
+    Route::post('/drip/{drip}/enroll', [DripCampaignController::class, 'enroll'])->name('drip.enroll');
+    Route::delete('/drip/{drip}/enrollments/{enrollment}', [DripCampaignController::class, 'unenroll'])->name('drip.unenroll');
+    // Drip Steps
+    Route::post('/drip/{drip}/steps', [DripCampaignController::class, 'storeStep'])->name('drip.steps.store');
+    Route::put('/drip/{drip}/steps/{step}', [DripCampaignController::class, 'updateStep'])->name('drip.steps.update');
+    Route::delete('/drip/{drip}/steps/{step}', [DripCampaignController::class, 'destroyStep'])->name('drip.steps.destroy');
 
     Route::resource('templates', EmailTemplateController::class)->except(['show']);
     Route::get('/templates/{template}/load', [EmailTemplateController::class, 'show'])->name('templates.load');
