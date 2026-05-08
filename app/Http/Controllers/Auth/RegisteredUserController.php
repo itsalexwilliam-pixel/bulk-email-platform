@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -36,10 +37,21 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Find or create the account for this registration
+        $account = Account::first();
+        if (! $account) {
+            $account = Account::create(['name' => $request->name]);
+        }
+
+        // First registered user gets admin role; others get operator
+        $role = User::where('account_id', $account->id)->exists() ? 'operator' : 'admin';
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'role'       => $role,
+            'account_id' => $account->id,
         ]);
 
         event(new Registered($user));
