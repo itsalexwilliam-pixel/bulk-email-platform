@@ -297,11 +297,13 @@ class CampaignController extends Controller
         try {
             config([
                 'mail.default' => 'smtp',
+                'mail.mailers.smtp.transport' => 'smtp',
                 'mail.mailers.smtp.host' => $smtp->host,
                 'mail.mailers.smtp.port' => $smtp->port,
                 'mail.mailers.smtp.username' => $smtp->username,
                 'mail.mailers.smtp.password' => $smtp->password,
                 'mail.mailers.smtp.encryption' => $smtp->encryption === 'none' ? null : $smtp->encryption,
+                'mail.mailers.smtp.timeout' => 8,
                 'mail.from.address' => $smtp->from_email,
                 'mail.from.name' => $smtp->from_name,
             ]);
