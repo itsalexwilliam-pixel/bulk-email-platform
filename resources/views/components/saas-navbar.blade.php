@@ -8,16 +8,22 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button type="button" class="relative p-2 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0h6z"/></svg>
-                <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
-            </button>
 
             <label for="themeSelector" class="sr-only">Select theme</label>
             <select id="themeSelector" class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/40">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="teal">Pro Teal</option>
+                <optgroup label="Light">
+                    <option value="light">☀ Light</option>
+                </optgroup>
+                <optgroup label="Dark">
+                    <option value="dark">🌙 Dark</option>
+                    <option value="navy">🌊 Midnight Navy</option>
+                    <option value="emerald">🌿 Deep Emerald</option>
+                    <option value="purple">💜 Royal Purple</option>
+                    <option value="charcoal">⚫ Charcoal</option>
+                </optgroup>
+                <optgroup label="Coloured">
+                    <option value="teal">🩵 Pro Teal</option>
+                </optgroup>
             </select>
 
             <details class="relative">

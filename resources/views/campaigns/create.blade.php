@@ -97,17 +97,28 @@
             <div class="space-y-4">
                 <div class="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/70 dark:bg-indigo-950/30 p-4">
                     <label class="block text-sm font-semibold mb-1 text-indigo-900 dark:text-indigo-200">Select Lists (Groups) <span class="text-rose-600">*</span></label>
-                    <select id="groupIdsSelect" name="group_ids[]" multiple size="8" required
-                            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        @forelse($groups as $group)
-                            <option value="{{ $group->id }}" @selected(collect(old('group_ids'))->contains($group->id)) data-count="{{ $group->contacts()->count() }}">
-                                {{ $group->name }} ({{ $group->contacts()->count() }} contacts)
-                            </option>
-                        @empty
-                            <option value="" disabled>No groups found. Please create a group first.</option>
-                        @endforelse
-                    </select>
-                    <p id="groupSelectionSummary" class="mt-2 text-xs text-rose-600">Please select at least one List (Group).</p>
+                    @if($groups->isEmpty())
+                        <div class="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 px-4 py-4 text-sm text-rose-700 dark:text-rose-300">
+                            <strong>No Lists (Groups) found.</strong>
+                            You need to create a group and add contacts to it before you can send a campaign.<br>
+                            <a href="{{ route('groups.index') }}" class="inline-block mt-2 underline font-medium hover:text-rose-900 dark:hover:text-rose-100">
+                                → Go to Groups and create one
+                            </a>
+                        </div>
+                        {{-- Hidden dummy select so the form field exists --}}
+                        <select id="groupIdsSelect" name="group_ids[]" multiple class="hidden"></select>
+                        <p id="groupSelectionSummary" class="mt-2 text-xs text-rose-600"></p>
+                    @else
+                        <select id="groupIdsSelect" name="group_ids[]" multiple size="8" required
+                                class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            @foreach($groups as $group)
+                                <option value="{{ $group->id }}" @selected(collect(old('group_ids'))->contains($group->id)) data-count="{{ $group->contacts()->count() }}">
+                                    {{ $group->name }} ({{ $group->contacts()->count() }} contacts)
+                                </option>
+                            @endforeach
+                        </select>
+                        <p id="groupSelectionSummary" class="mt-2 text-xs text-rose-600">Please select at least one List (Group). Hold Ctrl/Cmd to select multiple.</p>
+                    @endif
                     <p class="mt-1 text-xs text-indigo-800 dark:text-indigo-300">Recipients are resolved from selected lists. Duplicates are automatically removed.</p>
                 </div>
 
@@ -234,6 +245,48 @@
         ];
     });
 @endphp
+
+{{-- Template Picker Modal (must be in DOM before the script runs) --}}
+<div id="tplModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+            <h3 class="font-semibold text-slate-900 dark:text-white">Load Template</h3>
+            <button type="button" id="tplModalClose"
+                    class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="px-5 pt-4 pb-2">
+            <input type="text" id="tplSearch" placeholder="Search templates…"
+                   class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div id="tplList" class="flex-1 overflow-y-auto px-5 pb-5 space-y-2 mt-2">
+            @php
+                $accountId = (int)(auth()->user()?->account_id ?? 0);
+                $availableTemplates = \App\Models\EmailTemplate::where('account_id', $accountId)->orderBy('name')->get();
+            @endphp
+            @forelse($availableTemplates as $tpl)
+                <div data-tpl-item data-id="{{ $tpl->id }}" data-name="{{ $tpl->name }}"
+                     class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-medium text-sm text-slate-900 dark:text-white">{{ $tpl->name }}</span>
+                        @if($tpl->category)
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">{{ $tpl->category }}</span>
+                        @endif
+                    </div>
+                    @if($tpl->subject)
+                        <p class="text-xs text-slate-400 mt-0.5">{{ $tpl->subject }}</p>
+                    @endif
+                </div>
+            @empty
+                <div class="text-center py-8 text-slate-400 text-sm">
+                    No templates yet.
+                    <a href="{{ route('templates.create') }}" class="text-indigo-600 hover:underline" target="_blank">Create one →</a>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
@@ -456,70 +509,29 @@
         });
     });
 
-    tplList?.querySelectorAll('[data-tpl-item]').forEach(item => {
-        item.addEventListener('click', function () {
-            const id = this.dataset.id;
-            fetch(`/templates/${id}/load`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(r => r.json())
-            .then(tpl => {
-                // Load into Quill
-                quill.clipboard.dangerouslyPasteHTML(tpl.body || '');
-                bodyTextarea.value = tpl.body || '';
-                htmlEditor.value   = tpl.body || '';
-                // Pre-fill subject if empty
-                const subjectInput = document.querySelector('input[name="subject"]');
-                if (subjectInput && !subjectInput.value && tpl.subject) {
-                    subjectInput.value = tpl.subject;
-                }
-                closeTplModal();
-            })
-            .catch(() => alert('Failed to load template.'));
-        });
+    // Use event delegation so clicks work regardless of when the modal HTML is parsed
+    tplList?.addEventListener('click', function (e) {
+        const item = e.target.closest('[data-tpl-item]');
+        if (!item) return;
+        const id = item.dataset.id;
+        fetch(`/templates/${id}/load`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(tpl => {
+            // Load into Quill
+            quill.clipboard.dangerouslyPasteHTML(tpl.body || '');
+            bodyTextarea.value = tpl.body || '';
+            htmlEditor.value   = tpl.body || '';
+            // Pre-fill subject if empty
+            const subjectInput = document.querySelector('input[name="subject"]');
+            if (subjectInput && !subjectInput.value && tpl.subject) {
+                subjectInput.value = tpl.subject;
+            }
+            closeTplModal();
+        })
+        .catch(() => alert('Failed to load template.'));
     });
 </script>
-
-{{-- Template Picker Modal --}}
-<div id="tplModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-            <h3 class="font-semibold text-slate-900 dark:text-white">Load Template</h3>
-            <button type="button" id="tplModalClose"
-                    class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="px-5 pt-4 pb-2">
-            <input type="text" id="tplSearch" placeholder="Search templates…"
-                   class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div id="tplList" class="flex-1 overflow-y-auto px-5 pb-5 space-y-2 mt-2">
-            @php
-                $accountId = (int)(auth()->user()?->account_id ?? 0);
-                $availableTemplates = \App\Models\EmailTemplate::where('account_id', $accountId)->orderBy('name')->get();
-            @endphp
-            @forelse($availableTemplates as $tpl)
-                <div data-tpl-item data-id="{{ $tpl->id }}" data-name="{{ $tpl->name }}"
-                     class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="font-medium text-sm text-slate-900 dark:text-white">{{ $tpl->name }}</span>
-                        @if($tpl->category)
-                            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">{{ $tpl->category }}</span>
-                        @endif
-                    </div>
-                    @if($tpl->subject)
-                        <p class="text-xs text-slate-400 mt-0.5">{{ $tpl->subject }}</p>
-                    @endif
-                </div>
-            @empty
-                <div class="text-center py-8 text-slate-400 text-sm">
-                    No templates yet.
-                    <a href="{{ route('templates.create') }}" class="text-indigo-600 hover:underline" target="_blank">Create one →</a>
-                </div>
-            @endforelse
-        </div>
-    </div>
-</div>
 
 @endpush

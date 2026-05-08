@@ -155,82 +155,135 @@
         @endif
     </div>
 
-    <div>
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">Configured Servers</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            @forelse($servers as $server)
-                <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <h4 class="text-base font-semibold text-slate-900 dark:text-white">{{ $server->name }}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">{{ $server->host }}:{{ $server->port }} • {{ strtoupper($server->encryption) }}</p>
-                        </div>
-                        <span class="inline-flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full {{ $server->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
-                            <span class="w-2 h-2 rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
-                            {{ $server->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </div>
-
-                    <div class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-1">
-                        <p><span class="text-slate-400">Username:</span> {{ $server->username }}</p>
-                        <p><span class="text-slate-400">Password:</span> ******</p>
-                        <p><span class="text-slate-400">From:</span> {{ $server->from_name }} <{{ $server->from_email }}></p>
-                        <p><span class="text-slate-400">Daily Limit:</span> {{ $server->daily_limit ?? '—' }}</p>
-                        <p><span class="text-slate-400">Priority:</span> {{ $server->priority ?? 0 }}</p>
-                    </div>
-
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
-                        <a href="{{ route('smtp.edit', $server) }}" class="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition">
-                            Edit
-                        </a>
-
-                        <form action="{{ route('smtp.test', $server) }}" method="POST">
-                            @csrf
-                            <button class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium hover:bg-blue-200 transition">
-                                Test SMTP
-                            </button>
-                        </form>
-
-                        <form action="{{ route('smtp.send-test-email', $server) }}" method="POST" class="flex items-center gap-2">
-                            @csrf
-                            <input type="email" name="test_email" required placeholder="test@example.com" class="w-44 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-2 text-xs">
-                            <button class="px-3 py-2 rounded-lg bg-cyan-100 text-cyan-700 text-xs font-medium hover:bg-cyan-200 transition">
-                                Send Test Mail
-                            </button>
-                        </form>
-
-                        <form action="{{ route('smtp.toggle', $server) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                                <span class="relative inline-flex h-4 w-8 items-center rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}">
-                                    <span class="inline-block h-3 w-3 transform rounded-full bg-white transition {{ $server->is_active ? 'translate-x-4' : 'translate-x-1' }}"></span>
-                                </span>
-                                {{ $server->is_active ? 'Deactivate' : 'Activate' }}
-                            </button>
-                        </form>
-
-                        <form action="{{ route('smtp.destroy', $server) }}" method="POST" onsubmit="return confirm('Delete this SMTP server?')">
-                            @csrf
-                            @method('DELETE')
-                            <button class="px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-xs font-medium hover:bg-rose-200 transition">
-                                Delete
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @empty
-                <div class="col-span-full rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-slate-500">
-                    No SMTP servers configured.
-                </div>
-            @endforelse
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Configured Servers</h3>
         </div>
+        @if($servers->isEmpty())
+            <div class="p-10 text-center text-slate-500 dark:text-slate-400">
+                No SMTP servers configured.
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                        <tr class="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                            <th class="px-5 py-3">Name</th>
+                            <th class="px-5 py-3">Host / Port</th>
+                            <th class="px-5 py-3">Encryption</th>
+                            <th class="px-5 py-3">From</th>
+                            <th class="px-5 py-3">Limit / Priority</th>
+                            <th class="px-5 py-3">Status</th>
+                            <th class="px-5 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($servers as $server)
+                            <tr class="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+
+                                <td class="px-5 py-3">
+                                    <span class="font-medium text-slate-900 dark:text-white">{{ $server->name }}</span>
+                                    <p class="text-xs text-slate-400 mt-0.5">{{ $server->username }}</p>
+                                </td>
+
+                                <td class="px-5 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                                    {{ $server->host }}<span class="text-slate-400">:{{ $server->port }}</span>
+                                </td>
+
+                                <td class="px-5 py-3">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
+                                        {{ $server->encryption }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-3 text-slate-600 dark:text-slate-300 max-w-xs">
+                                    <span class="block truncate" title="{{ $server->from_name }} <{{ $server->from_email }}>">
+                                        {{ $server->from_name }} &lt;{{ $server->from_email }}&gt;
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
+                                    {{ $server->daily_limit ?? '∞' }} / {{ $server->priority ?? 0 }}
+                                </td>
+
+                                <td class="px-5 py-3">
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full
+                                        {{ $server->is_active
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
+                                        {{ $server->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-3">
+                                    <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                                        <a href="{{ route('smtp.edit', $server) }}"
+                                           class="px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-xs font-medium hover:bg-indigo-100 transition border border-indigo-200 dark:border-indigo-500/30">
+                                            Edit
+                                        </a>
+
+                                        <form action="{{ route('smtp.test', $server) }}" method="POST">
+                                            @csrf
+                                            <button class="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-medium hover:bg-blue-100 transition border border-blue-200 dark:border-blue-500/30">
+                                                Test
+                                            </button>
+                                        </form>
+
+                                        {{-- Send test email (toggle inline) --}}
+                                        <button type="button" onclick="toggleTestMailRow('{{ $server->id }}')"
+                                                class="px-2.5 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-100 transition border border-cyan-200 dark:border-cyan-500/30">
+                                            Send Mail
+                                        </button>
+
+                                        <form action="{{ route('smtp.toggle', $server) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition whitespace-nowrap">
+                                                {{ $server->is_active ? 'Deactivate' : 'Activate' }}
+                                            </button>
+                                        </form>
+
+                                        <form action="{{ route('smtp.destroy', $server) }}" method="POST"
+                                              onsubmit="return confirm('Delete this SMTP server?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="px-2.5 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs font-medium hover:bg-rose-100 transition border border-rose-200 dark:border-rose-500/30">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    {{-- Inline test email row (hidden by default) --}}
+                                    <div id="test-mail-row-{{ $server->id }}" class="hidden mt-2">
+                                        <form action="{{ route('smtp.send-test-email', $server) }}" method="POST"
+                                              class="flex items-center gap-2">
+                                            @csrf
+                                            <input type="email" name="test_email" required placeholder="test@example.com"
+                                                   class="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-1.5 text-xs">
+                                            <button class="shrink-0 px-2.5 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 text-xs font-medium hover:bg-cyan-100 transition border border-cyan-200 dark:border-cyan-500/30">
+                                                Send
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 
     <div>{{ $servers->links() }}</div>
 </div>
 
 <script>
+function toggleTestMailRow(id) {
+    const row = document.getElementById('test-mail-row-' + id);
+    if (row) row.classList.toggle('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const presets = {
         gmail: { host: 'smtp.gmail.com', port: '587', encryption: 'tls' },

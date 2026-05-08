@@ -4,16 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name', 'Novelio Technologies') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    <style>
+        /* ── Theme: Light (default) ────────────────────────────── */
+        body.theme-light { --accent: #4f46e5; --accent-hover: #4338ca; }
+
+        /* ── Theme: Dark ───────────────────────────────────────── */
+        body.theme-dark  { --accent: #818cf8; --accent-hover: #6366f1; }
+
+        /* ── Theme: Pro Teal ───────────────────────────────────── */
+        body.theme-teal  { --accent: #0d9488; --accent-hover: #0f766e; }
+
+        /* ── Theme: Midnight Navy ──────────────────────────────── */
+        body.theme-navy {
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            background-color: #0f172a !important;
+            color: #cbd5e1 !important;
+        }
+        body.theme-navy .bg-white,
+        body.theme-navy .dark\:bg-slate-900 { background-color: #1e293b !important; }
+        body.theme-navy .bg-slate-50,
+        body.theme-navy .dark\:bg-slate-950 { background-color: #0f172a !important; }
+        body.theme-navy .border-slate-200,
+        body.theme-navy .dark\:border-slate-800 { border-color: #334155 !important; }
+        body.theme-navy .text-slate-900,
+        body.theme-navy .dark\:text-white { color: #f1f5f9 !important; }
+        body.theme-navy .text-slate-500,
+        body.theme-navy .dark\:text-slate-400 { color: #94a3b8 !important; }
+        body.theme-navy .bg-indigo-600 { background-color: #3b82f6 !important; }
+        body.theme-navy .hover\:bg-slate-100:hover,
+        body.theme-navy .dark\:hover\:bg-slate-800:hover { background-color: #334155 !important; }
+        body.theme-navy .bg-white\/90,
+        body.theme-navy .dark\:bg-slate-900\/90 { background-color: rgba(30,41,59,0.95) !important; }
+        body.theme-navy .bg-slate-50\/70,
+        body.theme-navy .dark\:bg-slate-800\/50 { background-color: rgba(15,23,42,0.7) !important; }
+
+        /* ── Theme: Deep Emerald ───────────────────────────────── */
+        body.theme-emerald {
+            --accent: #10b981;
+            --accent-hover: #059669;
+            background-color: #0a1f18 !important;
+            color: #d1fae5 !important;
+        }
+        body.theme-emerald .bg-white,
+        body.theme-emerald .dark\:bg-slate-900 { background-color: #0d2b1f !important; }
+        body.theme-emerald .bg-slate-50,
+        body.theme-emerald .dark\:bg-slate-950 { background-color: #0a1f18 !important; }
+        body.theme-emerald .border-slate-200,
+        body.theme-emerald .dark\:border-slate-800 { border-color: #1a4a36 !important; }
+        body.theme-emerald .text-slate-900,
+        body.theme-emerald .dark\:text-white { color: #ecfdf5 !important; }
+        body.theme-emerald .text-slate-500,
+        body.theme-emerald .dark\:text-slate-400 { color: #6ee7b7 !important; }
+        body.theme-emerald .bg-indigo-600 { background-color: #10b981 !important; }
+        body.theme-emerald .hover\:bg-slate-100:hover,
+        body.theme-emerald .dark\:hover\:bg-slate-800:hover { background-color: #1a4a36 !important; }
+        body.theme-emerald .bg-white\/90,
+        body.theme-emerald .dark\:bg-slate-900\/90 { background-color: rgba(13,43,31,0.95) !important; }
+        body.theme-emerald .bg-slate-50\/70,
+        body.theme-emerald .dark\:bg-slate-800\/50 { background-color: rgba(10,31,24,0.7) !important; }
+
+        /* ── Theme: Royal Purple ───────────────────────────────── */
+        body.theme-purple {
+            --accent: #a855f7;
+            --accent-hover: #9333ea;
+            background-color: #120a1e !important;
+            color: #e9d5ff !important;
+        }
+        body.theme-purple .bg-white,
+        body.theme-purple .dark\:bg-slate-900 { background-color: #1c1030 !important; }
+        body.theme-purple .bg-slate-50,
+        body.theme-purple .dark\:bg-slate-950 { background-color: #120a1e !important; }
+        body.theme-purple .border-slate-200,
+        body.theme-purple .dark\:border-slate-800 { border-color: #3b1f5e !important; }
+        body.theme-purple .text-slate-900,
+        body.theme-purple .dark\:text-white { color: #faf5ff !important; }
+        body.theme-purple .text-slate-500,
+        body.theme-purple .dark\:text-slate-400 { color: #c4b5fd !important; }
+        body.theme-purple .bg-indigo-600 { background-color: #a855f7 !important; }
+        body.theme-purple .hover\:bg-slate-100:hover,
+        body.theme-purple .dark\:hover\:bg-slate-800:hover { background-color: #3b1f5e !important; }
+        body.theme-purple .bg-white\/90,
+        body.theme-purple .dark\:bg-slate-900\/90 { background-color: rgba(28,16,48,0.95) !important; }
+        body.theme-purple .bg-slate-50\/70,
+        body.theme-purple .dark\:bg-slate-800\/50 { background-color: rgba(18,10,30,0.7) !important; }
+
+        /* ── Theme: Charcoal ───────────────────────────────────── */
+        body.theme-charcoal {
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            background-color: #111111 !important;
+            color: #d4d4d4 !important;
+        }
+        body.theme-charcoal .bg-white,
+        body.theme-charcoal .dark\:bg-slate-900 { background-color: #1c1c1c !important; }
+        body.theme-charcoal .bg-slate-50,
+        body.theme-charcoal .dark\:bg-slate-950 { background-color: #111111 !important; }
+        body.theme-charcoal .border-slate-200,
+        body.theme-charcoal .dark\:border-slate-800 { border-color: #2e2e2e !important; }
+        body.theme-charcoal .text-slate-900,
+        body.theme-charcoal .dark\:text-white { color: #f5f5f5 !important; }
+        body.theme-charcoal .text-slate-500,
+        body.theme-charcoal .dark\:text-slate-400 { color: #a3a3a3 !important; }
+        body.theme-charcoal .bg-indigo-600 { background-color: #f59e0b !important; }
+        body.theme-charcoal .hover\:bg-slate-100:hover,
+        body.theme-charcoal .dark\:hover\:bg-slate-800:hover { background-color: #2e2e2e !important; }
+        body.theme-charcoal .bg-white\/90,
+        body.theme-charcoal .dark\:bg-slate-900\/90 { background-color: rgba(28,28,28,0.95) !important; }
+        body.theme-charcoal .bg-slate-50\/70,
+        body.theme-charcoal .dark\:bg-slate-800\/50 { background-color: rgba(17,17,17,0.7) !important; }
+    </style>
     <script>
         (function () {
             var stored = localStorage.getItem('app_theme');
-            var allowed = ['light', 'dark', 'teal'];
+            var allowed = ['light', 'dark', 'teal', 'navy', 'emerald', 'purple', 'charcoal'];
             var theme = allowed.includes(stored) ? stored : 'light';
 
-            document.documentElement.classList.toggle('dark', theme === 'dark');
+            /* Dark-mode Tailwind prefix only for dark/navy/emerald/purple/charcoal */
+            var darkThemes = ['dark', 'navy', 'emerald', 'purple', 'charcoal'];
+            document.documentElement.classList.toggle('dark', darkThemes.includes(theme));
 
             document.addEventListener('DOMContentLoaded', function () {
-                document.body.classList.remove('theme-light', 'theme-dark', 'theme-teal');
+                document.body.classList.remove(
+                    'theme-light','theme-dark','theme-teal',
+                    'theme-navy','theme-emerald','theme-purple','theme-charcoal'
+                );
                 document.body.classList.add('theme-' + theme);
             });
         })();
@@ -74,7 +190,8 @@
 (function () {
     const root = document.documentElement;
     const body = document.body;
-    const allowedThemes = ['light', 'dark', 'teal'];
+    const allowedThemes = ['light', 'dark', 'teal', 'navy', 'emerald', 'purple', 'charcoal'];
+    const darkThemes = ['dark', 'navy', 'emerald', 'purple', 'charcoal'];
 
     function normalizeTheme(theme) {
         return allowedThemes.includes(theme) ? theme : 'light';
@@ -84,9 +201,12 @@
         const normalized = normalizeTheme(theme);
 
         localStorage.setItem('app_theme', normalized);
-        root.classList.toggle('dark', normalized === 'dark');
+        root.classList.toggle('dark', darkThemes.includes(normalized));
 
-        body.classList.remove('theme-light', 'theme-dark', 'theme-teal');
+        body.classList.remove(
+            'theme-light', 'theme-dark', 'theme-teal',
+            'theme-navy', 'theme-emerald', 'theme-purple', 'theme-charcoal'
+        );
         body.classList.add(`theme-${normalized}`);
 
         const selector = document.getElementById('themeSelector');
