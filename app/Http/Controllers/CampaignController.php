@@ -16,7 +16,7 @@ class CampaignController extends Controller
 {
     public function index()
     {
-        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $accountId = $this->currentAccountId();
 
         $campaigns = Campaign::query()
             ->where('account_id', $accountId)
@@ -47,7 +47,7 @@ class CampaignController extends Controller
 
     public function liveStats(Campaign $campaign)
     {
-        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $accountId = $this->currentAccountId();
         abort_if((int) $campaign->account_id !== $accountId, 403);
 
         $queued = $campaign->emailQueue()->whereIn('status', ['queued', 'pending'])->count();
@@ -89,7 +89,7 @@ class CampaignController extends Controller
 
     public function create()
     {
-        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $accountId = $this->currentAccountId();
 
         $contacts = Contact::query()->where('account_id', $accountId)->with('groups')->orderBy('name')->get();
         $groupContacts = Contact::query()
@@ -131,12 +131,7 @@ class CampaignController extends Controller
             $attachmentName = $file->getClientOriginalName();
         }
 
-        $accountId = (int) ($request->user()?->account_id ?? 0);
-        if ($accountId <= 0) {
-            return back()
-                ->withInput()
-                ->withErrors(['campaign' => 'Missing account context. Please login again and retry.']);
-        }
+        $accountId = $this->getAccountId($request);
 
         $campaign = new Campaign();
         $campaign->account_id = $accountId;
@@ -177,7 +172,7 @@ class CampaignController extends Controller
 
     public function edit(Campaign $campaign)
     {
-        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $accountId = $this->currentAccountId();
         abort_if((int) $campaign->account_id !== $accountId, 403);
 
         $contacts = Contact::query()->where('account_id', $accountId)->with('groups')->orderBy('name')->get();        $groupContacts = Contact::query()
@@ -196,7 +191,7 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign)
     {
-        $accountId = (int) ($request->user()?->account_id ?? 0);
+        $accountId = $this->getAccountId($request);
         abort_if((int) $campaign->account_id !== $accountId, 403);
 
         $data = $request->validate([
@@ -271,7 +266,7 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
-        $accountId = (int) (auth()->user()?->account_id ?? 0);
+        $accountId = $this->currentAccountId();
         abort_if((int) $campaign->account_id !== $accountId, 403);
 
         $campaign->delete();
@@ -281,7 +276,7 @@ class CampaignController extends Controller
 
     public function sendTestEmail(Request $request, Campaign $campaign)
     {
-        $accountId = (int) ($request->user()?->account_id ?? 0);
+        $accountId = $this->getAccountId($request);
         abort_if((int) $campaign->account_id !== $accountId, 403);
 
         $data = $request->validate([

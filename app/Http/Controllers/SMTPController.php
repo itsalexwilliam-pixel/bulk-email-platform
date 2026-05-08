@@ -142,11 +142,11 @@ class SMTPController extends Controller
                 'smtp_id' => $smtp->id,
                 'account_id' => $smtp->account_id,
                 'error_type' => class_basename($e),
-                'error' => 'connection failed / timeout / authentication failed',
+                'error' => $e->getMessage(),
             ]);
 
             return back()->withErrors([
-                'smtp_test' => "SMTP test failed for {$smtp->name}: connection failed / timeout / authentication failed.",
+                'smtp_test' => "SMTP test failed for {$smtp->name}: " . $e->getMessage(),
             ]);
         }
     }
@@ -174,11 +174,11 @@ class SMTPController extends Controller
                 'smtp_id' => $smtp->id,
                 'account_id' => $smtp->account_id,
                 'error_type' => class_basename($e),
-                'error' => 'connection failed / timeout / authentication failed',
+                'error' => $e->getMessage(),
             ]);
 
             return back()->withErrors([
-                'smtp_test_email' => "Failed to send test email via {$smtp->name}: connection failed / timeout / authentication failed.",
+                'smtp_test_email' => "Failed to send test email via {$smtp->name}: " . $e->getMessage(),
             ]);
         }
     }
@@ -293,13 +293,6 @@ class SMTPController extends Controller
             'smtp_bulk_failed_rows' => $failedRows,
             'success' => "Bulk upload completed. Added {$successCount} SMTP server(s).",
         ]);
-    }
-
-    private function getAccountId(Request $request): int
-    {
-        $accountId = (int) ($request->user()?->account_id ?? 0);
-        abort_if($accountId <= 0, 403, 'Account context is missing.');
-        return $accountId;
     }
 
     private function guardAccountAccess(Request $request, SmtpServer $smtp): void

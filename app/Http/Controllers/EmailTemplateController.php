@@ -7,13 +7,6 @@ use Illuminate\Http\Request;
 
 class EmailTemplateController extends Controller
 {
-    private function getAccountId(Request $request): int
-    {
-        $accountId = (int) ($request->user()?->account_id ?? 0);
-        abort_if($accountId <= 0, 403, 'Account context is missing.');
-        return $accountId;
-    }
-
     public function index(Request $request)
     {
         $accountId = $this->getAccountId($request);

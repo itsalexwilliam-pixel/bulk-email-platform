@@ -172,7 +172,7 @@ class SingleEmailController extends Controller
             $queueItem->update([
                 'status' => 'failed',
                 'attempts' => ((int) $queueItem->attempts) + 1,
-                'last_error' => 'connection failed / timeout / authentication failed',
+                'last_error' => $e->getMessage(),
             ]);
 
             $smtp->update(['last_used_at' => now()]);
@@ -183,11 +183,11 @@ class SingleEmailController extends Controller
                 'smtp_id' => $smtp->id,
                 'account_id' => $accountId,
                 'error_type' => class_basename($e),
-                'error' => 'connection failed / timeout / authentication failed',
+                'error' => $e->getMessage(),
             ]);
 
             return back()->withErrors([
-                'single_email' => 'Failed to send single email: connection failed / timeout / authentication failed.',
+                'single_email' => 'Failed to send single email: ' . $e->getMessage(),
             ])->withInput();
         } finally {
             foreach ($storedAttachments as $attachment) {
@@ -210,14 +210,6 @@ class SingleEmailController extends Controller
         $parts = preg_split('/\s*,\s*/', trim($value)) ?: [];
 
         return array_values(array_filter($parts, static fn ($item) => $item !== ''));
-    }
-
-    private function getAccountId(Request $request): int
-    {
-        $accountId = (int) ($request->user()?->account_id ?? 0);
-        abort_if($accountId <= 0, 403, 'Account context is missing.');
-
-        return $accountId;
     }
 
     private function applySmtpConfig(SmtpServer $smtp, ?string $fromEmailOverride = null, ?string $fromNameOverride = null): void
