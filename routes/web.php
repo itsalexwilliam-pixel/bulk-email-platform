@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ImportController;
@@ -65,6 +66,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::resource('templates', EmailTemplateController::class)->except(['show']);
+    Route::get('/templates/{template}/load', [EmailTemplateController::class, 'show'])->name('templates.load');
 
     Route::middleware('admin')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
