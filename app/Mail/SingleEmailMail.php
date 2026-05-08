@@ -43,8 +43,8 @@ class SingleEmailMail extends Mailable
         $trackedHtml = $this->buildTrackedHtml(
             $inlineReadyHtml,
             $this->queueItem->id,
-            false,
-            null,
+            true,
+            $this->queueItem->email,
             [
                 'utm_source' => $this->queueItem->utm_source,
                 'utm_medium' => $this->queueItem->utm_medium,
