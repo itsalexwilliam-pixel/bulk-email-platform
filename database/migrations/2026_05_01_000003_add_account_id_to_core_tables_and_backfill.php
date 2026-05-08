@@ -24,9 +24,11 @@ return new class extends Migration
         ];
 
         foreach ($tables as $tableName) {
-            Schema::table($tableName, function (Blueprint $table) {
-                $table->foreignId('account_id')->nullable()->after('id')->constrained('accounts')->nullOnDelete();
-            });
+            if (! Schema::hasColumn($tableName, 'account_id')) {
+                Schema::table($tableName, function (Blueprint $table) {
+                    $table->foreignId('account_id')->nullable()->after('id')->constrained('accounts')->nullOnDelete();
+                });
+            }
         }
 
         $freePlanId = DB::table('plans')->where('slug', 'free')->value('id');

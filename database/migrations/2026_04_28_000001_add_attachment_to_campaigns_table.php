@@ -9,8 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->string('attachment_path')->nullable()->after('content');
-            $table->string('attachment_name')->nullable()->after('attachment_path');
+            if (! Schema::hasColumn('campaigns', 'attachment_path')) {
+                $table->string('attachment_path')->nullable()->after('content');
+            }
+            if (! Schema::hasColumn('campaigns', 'attachment_name')) {
+                $table->string('attachment_name')->nullable()->after('attachment_path');
+            }
         });
     }
 

@@ -9,8 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('app_settings', function (Blueprint $table) {
-            $table->string('unsubscribe_logo_url')->nullable()->after('timezone');
-            $table->text('unsubscribe_message')->nullable()->after('unsubscribe_logo_url');
+            if (! Schema::hasColumn('app_settings', 'unsubscribe_logo_url')) {
+                $table->string('unsubscribe_logo_url')->nullable()->after('timezone');
+            }
+            if (! Schema::hasColumn('app_settings', 'unsubscribe_message')) {
+                $table->text('unsubscribe_message')->nullable()->after('unsubscribe_logo_url');
+            }
         });
     }
 

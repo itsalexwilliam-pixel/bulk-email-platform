@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('campaigns', function (Blueprint $table) {
-            $table->boolean('warmup_enabled')->default(false)->after('attachment_name');
-            $table->unsignedTinyInteger('warmup_day')->default(1)->after('warmup_enabled');
-            $table->timestamp('warmup_started_at')->nullable()->after('warmup_day');
+            if (! Schema::hasColumn('campaigns', 'warmup_enabled')) {
+                $table->boolean('warmup_enabled')->default(false)->after('attachment_name');
+            }
+            if (! Schema::hasColumn('campaigns', 'warmup_day')) {
+                $table->unsignedTinyInteger('warmup_day')->default(1)->after('warmup_enabled');
+            }
+            if (! Schema::hasColumn('campaigns', 'warmup_started_at')) {
+                $table->timestamp('warmup_started_at')->nullable()->after('warmup_day');
+            }
         });
     }
 

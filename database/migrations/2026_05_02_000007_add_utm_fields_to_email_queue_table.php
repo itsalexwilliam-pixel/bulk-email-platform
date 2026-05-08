@@ -12,11 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('email_queue', function (Blueprint $table) {
-            $table->string('utm_source', 255)->nullable()->after('from_name');
-            $table->string('utm_medium', 255)->nullable()->after('utm_source');
-            $table->string('utm_campaign', 255)->nullable()->after('utm_medium');
-            $table->string('utm_term', 255)->nullable()->after('utm_campaign');
-            $table->string('utm_content', 255)->nullable()->after('utm_term');
+            if (! Schema::hasColumn('email_queue', 'utm_source')) {
+                $table->string('utm_source', 255)->nullable()->after('from_name');
+            }
+            if (! Schema::hasColumn('email_queue', 'utm_medium')) {
+                $table->string('utm_medium', 255)->nullable()->after('utm_source');
+            }
+            if (! Schema::hasColumn('email_queue', 'utm_campaign')) {
+                $table->string('utm_campaign', 255)->nullable()->after('utm_medium');
+            }
+            if (! Schema::hasColumn('email_queue', 'utm_term')) {
+                $table->string('utm_term', 255)->nullable()->after('utm_campaign');
+            }
+            if (! Schema::hasColumn('email_queue', 'utm_content')) {
+                $table->string('utm_content', 255)->nullable()->after('utm_term');
+            }
         });
     }
 

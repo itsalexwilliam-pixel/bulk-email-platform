@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('email_queue', function (Blueprint $table) {
-            $table->longText('body_snapshot')->nullable()->after('body');
-        });
+        if (! Schema::hasColumn('email_queue', 'body_snapshot')) {
+            Schema::table('email_queue', function (Blueprint $table) {
+                $table->longText('body_snapshot')->nullable()->after('body');
+            });
+        }
     }
 
     /**

@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('contacts', function (Blueprint $table) {
-            $table->boolean('is_bounced')->default(false)->after('website');
-        });
+        if (! Schema::hasColumn('contacts', 'is_bounced')) {
+            Schema::table('contacts', function (Blueprint $table) {
+                $table->boolean('is_bounced')->default(false)->after('website');
+            });
+        }
     }
 
     /**

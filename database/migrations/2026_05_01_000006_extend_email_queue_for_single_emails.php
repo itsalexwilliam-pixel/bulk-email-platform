@@ -11,18 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('email_queue', function (Blueprint $table) {
-            $table->enum('type', ['campaign', 'single'])->default('campaign')->after('email');
-            $table->foreignId('smtp_server_id')->nullable()->after('contact_id')->constrained('smtp_servers')->nullOnDelete();
-            $table->string('subject')->nullable()->after('type');
-            $table->longText('body')->nullable()->after('subject');
-            $table->string('from_email')->nullable()->after('body');
-            $table->string('from_name')->nullable()->after('from_email');
-            $table->json('attachments')->nullable()->after('from_name');
+        if (! Schema::hasColumn('email_queue', 'type')) {
+            Schema::table('email_queue', function (Blueprint $table) {
+                $table->enum('type', ['campaign', 'single'])->default('campaign')->after('email');
+                $table->foreignId('smtp_server_id')->nullable()->after('contact_id')->constrained('smtp_servers')->nullOnDelete();
+                $table->string('subject')->nullable()->after('type');
+                $table->longText('body')->nullable()->after('subject');
+                $table->string('from_email')->nullable()->after('body');
+                $table->string('from_name')->nullable()->after('from_email');
+                $table->json('attachments')->nullable()->after('from_name');
 
-            $table->index(['type', 'created_at'], 'email_queue_type_created_at_idx');
-            $table->index('smtp_server_id', 'email_queue_smtp_server_id_idx');
-        });
+                $table->index(['type', 'created_at'], 'email_queue_type_created_at_idx');
+                $table->index('smtp_server_id', 'email_queue_smtp_server_id_idx');
+            });
+        }
 
         Schema::table('email_queue', function (Blueprint $table) {
             $table->dropForeign(['campaign_id']);

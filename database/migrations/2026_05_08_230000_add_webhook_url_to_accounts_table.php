@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('accounts', function (Blueprint $table) {
-            $table->string('webhook_url')->nullable()->after('owner_user_id');
-        });
+        if (! Schema::hasColumn('accounts', 'webhook_url')) {
+            Schema::table('accounts', function (Blueprint $table) {
+                $table->string('webhook_url')->nullable()->after('owner_user_id');
+            });
+        }
     }
 
     public function down(): void

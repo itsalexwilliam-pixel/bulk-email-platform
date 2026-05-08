@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('campaigns', function (Blueprint $table) {
-            $table->unsignedInteger('emails_per_minute')->nullable()->after('warmup_started_at');
-        });
+        if (! Schema::hasColumn('campaigns', 'emails_per_minute')) {
+            Schema::table('campaigns', function (Blueprint $table) {
+                $table->unsignedInteger('emails_per_minute')->nullable()->after('warmup_started_at');
+            });
+        }
     }
 
     /**
