@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('app_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('app_name')->default('Bulk Mailer');
+            $table->string('app_name')->default('Novelio Technologies');
             $table->string('default_from_name')->nullable();
             $table->string('default_from_email')->nullable();
             $table->unsignedInteger('mail_rate_per_minute')->default(60);

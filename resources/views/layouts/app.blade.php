@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name', 'Bulk Mailer') }}</title>
+    <title>{{ config('app.name', 'Novelio Technologies') }}</title>
     <script>
         (function () {
             var stored = localStorage.getItem('app_theme');
