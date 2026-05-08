@@ -11,6 +11,7 @@
         ['label' => 'Campaign Report', 'route' => 'reports.index', 'icon' => 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z'],
         ['label' => 'Single Email Report', 'route' => 'reports.single-email', 'icon' => 'M4 4h16v16H4V4zm2 3v1h12V7H6zm0 3v7h12v-7H6zm2 2h8v1H8v-1zm0 2h6v1H8v-1z'],
         ['label' => 'Unsubscribes', 'route' => 'unsubscribes.index', 'icon' => 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'],
+        ['label' => 'Bounces', 'route' => 'bounces.index', 'icon' => 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'],
         ['label' => 'Settings', 'route' => 'settings.index', 'icon' => 'M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z'],
     ];
 

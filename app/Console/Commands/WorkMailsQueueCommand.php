@@ -251,6 +251,20 @@ class WorkMailsQueueCommand extends Command
             return false;
         }
 
+        $isBounced = \App\Models\Contact::whereRaw('LOWER(email) = ?', [strtolower($item->email)])
+            ->where('is_bounced', true)->exists();
+
+        if ($isBounced) {
+            $item->update([
+                'status' => 'failed',
+                'attempts' => 3,
+                'last_error' => 'Bounced',
+            ]);
+
+            $this->warn("Skipped bounced email: {$item->email}");
+            return false;
+        }
+
         $accountId = (int) ($item->campaign?->account_id ?? 0);
         if ($accountId <= 0) {
             $item->update([

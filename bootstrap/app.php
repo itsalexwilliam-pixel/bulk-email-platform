@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => AdminMiddleware::class,
         ]);
+        // Exempt SES bounce webhook from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/ses-bounce',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

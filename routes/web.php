@@ -3,6 +3,7 @@
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
+use App\Http\Controllers\BounceController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContactTagController;
 use App\Http\Controllers\GroupController;
@@ -21,6 +22,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// SES webhook — no auth required
+Route::post('/webhooks/ses-bounce', [BounceController::class, 'sesBounce'])->name('webhooks.ses-bounce');
 
 Route::get('/track/open/{id}', [TrackingController::class, 'open'])->name('track.open');
 Route::get('/track/click/{id}', [TrackingController::class, 'click'])->name('track.click');
@@ -61,6 +65,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
     Route::delete('/unsubscribes/{unsubscribe}', [UnsubscribeController::class, 'destroy'])->name('unsubscribes.destroy');
+
+    // Bounces
+    Route::get('/bounces', [BounceController::class, 'index'])->name('bounces.index');
+    Route::post('/contacts/{contact}/mark-bounced', [BounceController::class, 'markBounced'])->name('contacts.mark-bounced');
+    Route::post('/contacts/{contact}/clear-bounced', [BounceController::class, 'clearBounced'])->name('contacts.clear-bounced');
     Route::post('/unsubscribes/{unsubscribe}/delete', [UnsubscribeController::class, 'destroy'])->name('unsubscribes.delete');
     Route::get('/single-email', [SingleEmailController::class, 'create'])->name('single-email.create');
     Route::post('/single-email', [SingleEmailController::class, 'store'])->middleware('throttle:20,1')->name('single-email.store');

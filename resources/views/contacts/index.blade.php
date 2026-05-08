@@ -114,7 +114,12 @@
                             <td class="py-3 px-4">
                                 <input type="checkbox" data-id="{{ $contact->id }}" class="contact-checkbox rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                             </td>
-                            <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-100 contact-name">{{ $contact->name }}</td>
+                            <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-100 contact-name">
+                                {{ $contact->name }}
+                                @if($contact->is_bounced)
+                                    <span class="ml-1 px-1.5 py-0.5 text-[10px] rounded bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300">bounced</span>
+                                @endif
+                            </td>
                             <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ $contact->business_name ?: '—' }}</td>
                             <td class="py-3 px-4 text-slate-600 dark:text-slate-300 contact-email">{{ $contact->email }}</td>
                             <td class="py-3 px-4 text-slate-600 dark:text-slate-300">
@@ -176,11 +181,30 @@
                                 @endif
                             </td>
                             <td class="py-3 px-4">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <a href="{{ route('contacts.edit', $contact) }}"
                                        class="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-medium hover:bg-amber-200 transition">
                                         Edit
                                     </a>
+                                    @if($contact->is_bounced)
+                                        <form method="POST" action="{{ route('contacts.clear-bounced', $contact) }}" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium hover:bg-emerald-200 transition"
+                                                    onclick="return confirm('Clear bounce flag for {{ $contact->email }}?')">
+                                                Unmark
+                                            </button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('contacts.mark-bounced', $contact) }}" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-xs font-medium hover:bg-orange-200 transition"
+                                                    onclick="return confirm('Mark {{ $contact->email }} as bounced? They will be unsubscribed.')">
+                                                Bounced
+                                            </button>
+                                        </form>
+                                    @endif
                                     <button type="submit"
                                             form="delete-contact-{{ $contact->id }}"
                                             class="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-medium hover:bg-rose-200 transition"
