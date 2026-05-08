@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/images/logo.png" alt="Novelio Technologies" width="320">
+<img src="https://noveliotech.com/wp-content/uploads/2026/04/Novelio-final-logo-n-blue.png" alt="Novelio Technologies" width="320">
 
 # Bulk Email Platform
 
