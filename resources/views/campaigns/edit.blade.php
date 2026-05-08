@@ -53,19 +53,25 @@
                 </div>
 
                 {{-- Mode toggle tabs --}}
-                <div class="flex gap-1 mb-2">
-                    <button type="button" id="tabRichText"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition">
-                        Rich Text
-                    </button>
-                    <button type="button" id="tabHtml"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                        HTML
-                    </button>
+                <div class="flex items-center gap-3 mb-2 flex-wrap">
+                    <div class="flex gap-1">
+                        <button type="button" id="tabRichText"
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition">
+                            ✏️ Rich Text
+                        </button>
+                        <button type="button" id="tabHtml"
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                            &lt;/&gt; HTML
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 italic">
+                        <strong class="text-slate-500 dark:text-slate-400 not-italic">Rich Text</strong> — use the toolbar to style your email visually. &nbsp;|&nbsp;
+                        <strong class="text-slate-500 dark:text-slate-400 not-italic">HTML</strong> — paste or write raw HTML code here, then switch to Rich Text to preview it.
+                    </p>
                 </div>
 
                 {{-- Hidden textarea submitted with form (no required — validated in JS) --}}
-                <textarea name="body" id="body-editor" class="sr-only">{{ old('body', $campaign->body) }}</textarea>
+                <textarea name="body" id="body-editor" class="sr-only">{!! str_replace('</textarea>', '<\/textarea>', old('body', $campaign->body)) !!}</textarea>
 
                 {{-- Quill rich-text editor --}}
                 <div id="quill-editor" style="height:420px;" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"></div>
@@ -328,8 +334,20 @@
     const tabHtml      = document.getElementById('tabHtml');
 
     // Pre-fill from existing campaign body
-    const existingContent = bodyTextarea.value.trim();
+    // If content looks like escaped HTML (contains &lt; or &gt;), unescape it first
+    function unescapeHtml(html) {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    }
+    let existingContent = bodyTextarea.value.trim();
     if (existingContent) {
+        // Detect escaped HTML and unescape before loading into Quill
+        if (existingContent.includes('&lt;') || existingContent.includes('&gt;')) {
+            existingContent = unescapeHtml(existingContent);
+            // Also update the hidden textarea so the corrected version is submitted
+            bodyTextarea.value = existingContent;
+        }
         quill.clipboard.dangerouslyPasteHTML(existingContent);
         htmlEditor.value = existingContent;
     }

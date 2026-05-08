@@ -29,14 +29,20 @@
     <div>
         <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Email Body <span class="text-rose-600">*</span></label>
 
-        <div class="flex gap-1 mb-2">
-            <button type="button" id="tplTabRich"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition">Rich Text</button>
-            <button type="button" id="tplTabHtml"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">HTML</button>
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+            <div class="flex gap-1">
+                <button type="button" id="tplTabRich"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white transition">✏️ Rich Text</button>
+                <button type="button" id="tplTabHtml"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">&lt;/&gt; HTML</button>
+            </div>
+            <p class="text-xs text-slate-400 dark:text-slate-500 italic">
+                <strong class="text-slate-500 dark:text-slate-400 not-italic">Rich Text</strong> — use the toolbar to style your email visually. &nbsp;|&nbsp;
+                <strong class="text-slate-500 dark:text-slate-400 not-italic">HTML</strong> — paste or write raw HTML code here, then switch to Rich Text to preview it.
+            </p>
         </div>
 
-        <textarea id="tpl-body" name="body" class="sr-only">{{ old('body', $template->body ?? '') }}</textarea>
+        <textarea id="tpl-body" name="body" class="sr-only">{!! str_replace('</textarea>', '<\/textarea>', old('body', $template->body ?? '')) !!}</textarea>
         <div id="tpl-quill" style="height:420px;" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"></div>
         <textarea id="tpl-html-editor" style="height:420px;" class="hidden w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" placeholder="Paste or type raw HTML here…"></textarea>
 
@@ -69,8 +75,17 @@
     const tplTabRich    = document.getElementById('tplTabRich');
     const tplTabHtml    = document.getElementById('tplTabHtml');
 
-    const existing = tplBody.value.trim();
+    function unescapeHtml(html) {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    }
+    let existing = tplBody.value.trim();
     if (existing) {
+        if (existing.includes('&lt;') || existing.includes('&gt;')) {
+            existing = unescapeHtml(existing);
+            tplBody.value = existing;
+        }
         tplQuill.clipboard.dangerouslyPasteHTML(existing);
         tplHtmlEditor.value = existing;
     }

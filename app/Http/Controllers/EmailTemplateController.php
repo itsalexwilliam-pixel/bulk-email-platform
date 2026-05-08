@@ -37,6 +37,7 @@ class EmailTemplateController extends Controller
             'category' => ['nullable', 'string', 'max:100'],
         ]);
 
+        $data['body'] = html_entity_decode($data['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
         EmailTemplate::create([...$data, 'account_id' => $accountId]);
 
         return redirect()->route('templates.index')->with('success', 'Template saved successfully.');
@@ -60,6 +61,7 @@ class EmailTemplateController extends Controller
             'category' => ['nullable', 'string', 'max:100'],
         ]);
 
+        $data['body'] = html_entity_decode($data['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $template->update($data);
 
         return redirect()->route('templates.index')->with('success', 'Template updated successfully.');

@@ -105,6 +105,13 @@
 
                                 <td class="px-5 py-3">
                                     <div class="flex items-center justify-end gap-2">
+                                        {{-- Eye / Preview button --}}
+                                        <button type="button"
+                                                onclick="previewTemplate({{ $template->id }}, {{ json_encode($template->name) }}, {{ json_encode($template->body) }})"
+                                                class="inline-flex items-center justify-center p-1.5 rounded-lg border border-sky-200 dark:border-sky-700/50 text-sky-500 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 transition"
+                                                title="Preview HTML">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </button>
                                         <a href="{{ route('templates.edit', $template) }}"
                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -134,10 +141,75 @@
     @endif
 
 </div>
+
+{{-- HTML Preview Modal --}}
+<div id="previewModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background:rgba(0,0,0,0.6);">
+    <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {{-- Modal header --}}
+        <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 shrink-0">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Template Preview —</span>
+                <span id="previewTitle" class="text-sm text-slate-500 dark:text-slate-400"></span>
+            </div>
+            <button onclick="closePreview()"
+                    class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        {{-- iframe preview --}}
+        <div class="flex-1 overflow-hidden">
+            <iframe id="previewFrame"
+                    class="w-full h-full border-0"
+                    style="min-height:500px;"
+                    sandbox="allow-same-origin"></iframe>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
+    function previewTemplate(id, name, body) {
+        document.getElementById('previewTitle').textContent = name;
+        const frame = document.getElementById('previewFrame');
+        const modal = document.getElementById('previewModal');
+
+        // Write HTML into the iframe
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open();
+        doc.write(body || '<p style="color:#94a3b8;font-family:sans-serif;padding:2rem;">No content to preview.</p>');
+        doc.close();
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+        const modal = document.getElementById('previewModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+        // Clear iframe
+        const frame = document.getElementById('previewFrame');
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open(); doc.write(''); doc.close();
+    }
+
+    // Close on backdrop click
+    document.getElementById('previewModal').addEventListener('click', function(e) {
+        if (e.target === this) closePreview();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closePreview();
+    });
+
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const filter = this.dataset.filter;

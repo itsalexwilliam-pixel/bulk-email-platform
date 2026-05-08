@@ -137,7 +137,7 @@ class CampaignController extends Controller
         $campaign->account_id = $accountId;
         $campaign->name = $data['name'];
         $campaign->subject = $data['subject'];
-        $campaign->body = $data['body'];
+        $campaign->body = html_entity_decode($data['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $campaign->attachment_path = $attachmentPath;
         $campaign->attachment_name = $attachmentName;
         $campaign->scheduled_at = $data['scheduled_at'] ?? null;
@@ -183,10 +183,11 @@ class CampaignController extends Controller
             ->orderBy('name')
             ->get();        $groups = Group::query()->where('account_id', $accountId)->orderBy('name')->get();
         $selectedContactIds = $campaign->contacts()->where('contacts.account_id', $accountId)->pluck('contacts.id')->toArray();
+        $selectedGroupIds   = [];
 
         $warmupSchedule = Campaign::WARMUP_SCHEDULE;
 
-        return view('campaigns.edit', compact('campaign', 'contacts', 'groupContacts', 'groups', 'selectedContactIds', 'warmupSchedule'));
+        return view('campaigns.edit', compact('campaign', 'contacts', 'groupContacts', 'groups', 'selectedContactIds', 'selectedGroupIds', 'warmupSchedule'));
     }
 
     public function update(Request $request, Campaign $campaign)
@@ -215,7 +216,7 @@ class CampaignController extends Controller
         $updateData = [
             'name' => $data['name'],
             'subject' => $data['subject'],
-            'body' => $data['body'],
+            'body' => html_entity_decode($data['body'], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
             'scheduled_at' => $data['scheduled_at'] ?? null,
             'status' => !empty($data['scheduled_at']) ? 'scheduled' : 'draft',
             'warmup_enabled' => $isWarmupEnabled,
@@ -305,7 +306,7 @@ class CampaignController extends Controller
                 'mail.from.name' => $smtp->from_name,
             ]);
 
-            Mail::raw($campaign->body, function ($message) use ($data, $campaign, $smtp) {
+            Mail::html(html_entity_decode($campaign->body, ENT_QUOTES | ENT_HTML5, 'UTF-8'), function ($message) use ($data, $campaign, $smtp) {
                 $message->to($data['test_email'])
                     ->subject("[TEST] {$campaign->subject}")
                     ->from($smtp->from_email, $smtp->from_name);
