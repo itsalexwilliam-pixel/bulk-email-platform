@@ -37,7 +37,7 @@ class UserManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->withMessage('This email address is already registered. Each user must have a unique email.')],
             'role' => ['required', Rule::in(['admin', 'manager', 'operator'])],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);

@@ -27,9 +27,10 @@ class TrackingController extends Controller
         if (!$exists) {
             EmailOpen::create([
                 'email_queue_id' => $queue->id,
-                'opened_at' => now(),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
+                'opened_at'      => now(),
+                'ip_address'     => $request->ip(),
+                'user_agent'     => $request->userAgent(),
+                'created_at'     => now(),
             ]);
 
             $this->fireWebhook($queue, 'open', [
@@ -73,10 +74,11 @@ class TrackingController extends Controller
 
         EmailClick::create([
             'email_queue_id' => $queue->id,
-            'url' => $decodedUrl,
-            'clicked_at' => now(),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
+            'url'            => $decodedUrl,
+            'clicked_at'     => now(),
+            'ip_address'     => $request->ip(),
+            'user_agent'     => $request->userAgent(),
+            'created_at'     => now(),
         ]);
 
         $this->fireWebhook($queue, 'click', [
