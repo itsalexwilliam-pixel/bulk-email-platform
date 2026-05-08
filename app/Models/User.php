@@ -52,4 +52,26 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isOperator(): bool
+    {
+        return $this->role === 'operator';
+    }
+
+    /**
+     * Check if user has at least the given role level.
+     * Hierarchy: admin > manager > operator
+     */
+    public function hasRole(string $minRole): bool
+    {
+        $hierarchy = ['operator' => 1, 'manager' => 2, 'admin' => 3];
+        $userLevel = $hierarchy[$this->role] ?? 0;
+        $required  = $hierarchy[$minRole] ?? 99;
+        return $userLevel >= $required;
+    }
 }
