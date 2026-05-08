@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ImportController;
@@ -23,9 +24,7 @@ Route::get('/track/open/{id}', [TrackingController::class, 'open'])->name('track
 Route::get('/track/click/{id}', [TrackingController::class, 'click'])->name('track.click');
 Route::get('/unsubscribe/{email}', [UnsubscribeController::class, 'unsubscribe'])->name('unsubscribe');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/contacts/bulk-delete', function () {
