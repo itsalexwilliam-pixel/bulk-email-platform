@@ -45,7 +45,8 @@ class CampaignMail extends Mailable
 
     public function content(): Content
     {
-        $processedBody = EmailHtmlPreprocessor::preprocess((string) $this->campaign->body);
+        $body = $this->replaceMergeTags((string) $this->campaign->body, $this->contact);
+        $processedBody = EmailHtmlPreprocessor::preprocess($body);
         $normalizedHtml = $this->normalizeForEmailClient($processedBody);
         $inlineReadyHtml = $this->inlineCssForEmailClients($normalizedHtml);
 
@@ -57,6 +58,19 @@ class CampaignMail extends Mailable
                 $this->contact->email
             )
         );
+    }
+
+    private function replaceMergeTags(string $body, Contact $contact): string
+    {
+        $tags = [
+            '{{First Name}}'    => $contact->name ?? '',
+            '{{Name}}'          => $contact->name ?? '',
+            '{{Email}}'         => $contact->email ?? '',
+            '{{Business Name}}' => $contact->business_name ?? '',
+            '{{Website}}'       => $contact->website ?? '',
+        ];
+
+        return str_replace(array_keys($tags), array_values($tags), $body);
     }
 
     private function normalizeForEmailClient(string $html): string
