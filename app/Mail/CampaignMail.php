@@ -29,8 +29,17 @@ class CampaignMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($this->contact->email)]);
+
         return new Envelope(
             subject: $this->campaign->subject,
+            using: [
+                function (\Symfony\Component\Mime\Email $email) use ($unsubscribeUrl) {
+                    $email->getHeaders()
+                        ->addTextHeader('List-Unsubscribe', '<' . $unsubscribeUrl . '>')
+                        ->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+                },
+            ]
         );
     }
 

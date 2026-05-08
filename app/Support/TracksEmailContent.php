@@ -20,9 +20,23 @@ trait TracksEmailContent
 
         if ($includeUnsubscribe && !empty($unsubscribeEmail)) {
             $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($unsubscribeEmail)]);
-            $unsubscribeHtml = '<p style="margin-top:16px;font-size:12px;color:#6b7280;">'
-                . '<a href="' . e($unsubscribeUrl) . '">Unsubscribe</a>'
-                . '</p>';
+            $appName = config('app.name', 'Novelio Technologies');
+
+            $unsubscribeHtml = '
+<div style="margin-top:32px;padding-top:24px;border-top:1px solid #e5e7eb;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+    <p style="margin:0 0 6px 0;font-size:12px;color:#9ca3af;line-height:1.5;">
+        You are receiving this email because you subscribed to communications from
+        <strong style="color:#6b7280;">' . e($appName) . '</strong>.
+    </p>
+    <p style="margin:0 0 10px 0;font-size:12px;color:#9ca3af;line-height:1.5;">
+        If you no longer wish to receive these emails, you can
+        <a href="' . e($unsubscribeUrl) . '"
+           style="color:#6366f1;text-decoration:underline;font-weight:600;">unsubscribe here</a>.
+    </p>
+    <p style="margin:0;font-size:11px;color:#d1d5db;">
+        &copy; ' . date('Y') . ' ' . e($appName) . '. All rights reserved.
+    </p>
+</div>';
 
             $injection = $unsubscribeHtml . $pixel;
         }
