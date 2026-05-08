@@ -306,7 +306,14 @@ class CampaignController extends Controller
                 'mail.from.name' => $smtp->from_name,
             ]);
 
-            Mail::html(html_entity_decode($campaign->body, ENT_QUOTES | ENT_HTML5, 'UTF-8'), function ($message) use ($data, $campaign, $smtp) {
+            $testBody = html_entity_decode($campaign->body, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $testBody = str_replace(
+                ['{{First Name}}', '{{Name}}', '{{Email}}', '{{Business Name}}', '{{Website}}'],
+                ['[First Name]',  '[Name]',   $data['test_email'], '[Business Name]', '[Website]'],
+                $testBody
+            );
+
+            Mail::html($testBody, function ($message) use ($data, $campaign, $smtp) {
                 $message->to($data['test_email'])
                     ->subject("[TEST] {$campaign->subject}")
                     ->from($smtp->from_email, $smtp->from_name);
