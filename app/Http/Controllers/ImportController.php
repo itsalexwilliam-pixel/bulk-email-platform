@@ -77,6 +77,8 @@ class ImportController extends Controller
         $imported = 0;
         $skipped = 0;
         $fileEmails = [];
+        $failedRows = [];   // [['row' => N, 'email' => '...', 'name' => '...', 'reasons' => [...]]]
+        $rowNumber = 1;     // 1-based, header is row 0
 
         while (($row = fgetcsv($handle)) !== false) {
             // Skip blank rows
@@ -84,7 +86,9 @@ class ImportController extends Controller
                 continue;
             }
 
+            $rowNumber++;
             $total++;
+            $reasons = [];
 
             // Build name from single column or first+last
             if ($hasName) {
@@ -114,17 +118,27 @@ class ImportController extends Controller
             );
 
             if ($validator->fails()) {
-                $skipped++;
-                continue;
+                foreach ($validator->errors()->all() as $msg) {
+                    $reasons[] = $msg;
+                }
             }
 
-            if (in_array($email, $fileEmails, true)) {
-                $skipped++;
-                continue;
+            if ($email !== '' && in_array($email, $fileEmails, true)) {
+                $reasons[] = 'Duplicate email in this file';
             }
 
-            if (Contact::where('email', $email)->exists()) {
+            if ($email !== '' && empty($reasons) && Contact::where('email', $email)->exists()) {
+                $reasons[] = 'Email already exists in contacts';
+            }
+
+            if (!empty($reasons)) {
                 $skipped++;
+                $failedRows[] = [
+                    'row'     => $rowNumber,
+                    'name'    => $name !== '' ? $name : '—',
+                    'email'   => $email !== '' ? $email : '—',
+                    'reasons' => $reasons,
+                ];
                 continue;
             }
 
@@ -145,9 +159,10 @@ class ImportController extends Controller
         fclose($handle);
 
         return view('import.result', [
-            'total'    => $total,
-            'imported' => $imported,
-            'skipped'  => $skipped,
+            'total'      => $total,
+            'imported'   => $imported,
+            'skipped'    => $skipped,
+            'failedRows' => $failedRows,
         ]);
     }
 }
