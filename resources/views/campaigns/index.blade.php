@@ -94,6 +94,15 @@
                                                 Resume
                                             </button>
                                         </form>
+                                    @elseif($campaign->status === 'completed')
+                                        <form action="{{ route('campaigns.send', $campaign) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-medium hover:bg-indigo-200 transition"
+                                                    onclick="return confirm('Resend this campaign to all contacts again?')">
+                                                Resend
+                                            </button>
+                                        </form>
                                     @endif
 
                                     <form action="{{ route('campaigns.send-test-email', $campaign) }}" method="POST" class="inline-flex items-center gap-2">
