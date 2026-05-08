@@ -93,6 +93,63 @@ class DashboardController extends Controller
             ->take(5)
             ->get(['id', 'email', 'subject', 'last_error', 'updated_at']);
 
+        // ── Campaign status donut ─────────────────────────────────────────────
+        $campaignStatusCounts = Campaign::where('account_id', $accountId)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $donutLabels = [];
+        $donutValues = [];
+        $donutColors = [];
+        $statusColorMap = [
+            'draft'     => '#94a3b8',
+            'scheduled' => '#f59e0b',
+            'sending'   => '#3b82f6',
+            'completed' => '#10b981',
+            'sent'      => '#10b981',
+            'paused'    => '#f97316',
+            'failed'    => '#ef4444',
+        ];
+        foreach ($campaignStatusCounts as $status => $count) {
+            $donutLabels[] = ucfirst($status);
+            $donutValues[] = $count;
+            $donutColors[] = $statusColorMap[$status] ?? '#6b7280';
+        }
+
+        // ── 30-day emails sent trend ──────────────────────────────────────────
+        $thirtyDaysAgo = $now->copy()->subDays(29)->startOfDay();
+        $sentBy30DayRaw = EmailQueue::where('account_id', $accountId)
+            ->where('status', 'sent')
+            ->whereNotNull('sent_at')
+            ->where('sent_at', '>=', $thirtyDaysAgo)
+            ->selectRaw('DATE(sent_at) as sent_date, COUNT(*) as total')
+            ->groupBy('sent_date')
+            ->pluck('total', 'sent_date');
+
+        $trend30Labels = [];
+        $trend30Values = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $day = $now->copy()->subDays($i);
+            $trend30Labels[] = $day->format('d M');
+            $trend30Values[] = (int) ($sentBy30DayRaw[$day->toDateString()] ?? 0);
+        }
+
+        // ── Top 5 contacts by opens ───────────────────────────────────────────
+        $topContactOpens = DB::table('email_opens')
+            ->join('email_queue', 'email_queue.id', '=', 'email_opens.email_queue_id')
+            ->join('contacts', 'contacts.id', '=', 'email_queue.contact_id')
+            ->where('email_queue.account_id', $accountId)
+            ->whereNotNull('email_queue.contact_id')
+            ->selectRaw('contacts.name, contacts.email as contact_email, COUNT(email_opens.id) as opens')
+            ->groupBy('contacts.id', 'contacts.name', 'contacts.email')
+            ->orderByDesc('opens')
+            ->limit(5)
+            ->get();
+
+        $topContactLabels = $topContactOpens->map(fn($c) => \Illuminate\Support\Str::limit($c->name ?: $c->contact_email, 18))->values()->toArray();
+        $topContactValues = $topContactOpens->pluck('opens')->values()->toArray();
+
         return view('dashboard', compact(
             'totalContacts', 'totalGroups', 'totalSmtp',
             'emailsSentTotal', 'emailsSentMonth', 'emailsFailed', 'emailsPending',
@@ -100,6 +157,9 @@ class DashboardController extends Controller
             'openRate', 'clickRate',
             'sentChartLabels', 'sentChartValues',
             'openClickLabels', 'openClickOpens', 'openClickClicks',
+            'donutLabels', 'donutValues', 'donutColors',
+            'trend30Labels', 'trend30Values',
+            'topContactLabels', 'topContactValues',
             'recentCampaigns', 'recentFailed'
         ));
     }

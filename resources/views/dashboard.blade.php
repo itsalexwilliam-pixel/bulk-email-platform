@@ -145,6 +145,37 @@
         </div>
     </div>
 
+    {{-- ── Additional Charts Row ─────────────────────────────────────────── --}}
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        {{-- 30-day trend --}}
+        <div class="xl:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Emails Sent — Last 30 Days</h3>
+                <span class="text-xs text-slate-400">{{ now()->subDays(29)->format('d M') }} – {{ now()->format('d M') }}</span>
+            </div>
+            <canvas id="trend30Chart" height="90"></canvas>
+        </div>
+
+        {{-- Campaign status donut --}}
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-4">Campaign Status</h3>
+            @if(array_sum($donutValues) > 0)
+                <canvas id="campaignDonut" height="160"></canvas>
+            @else
+                <div class="flex flex-col items-center justify-center h-40 text-slate-400 text-xs">No campaigns yet.</div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ── Top Contacts by Opens ────────────────────────────────────────────── --}}
+    @if(count($topContactValues) > 0)
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-4">Top 5 Most Engaged Contacts (Opens)</h3>
+        <canvas id="topContactsChart" height="80"></canvas>
+    </div>
+    @endif
+
     {{-- ── Recent Campaigns + Failed Emails ───────────────────────────────── --}}
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
@@ -279,6 +310,91 @@
                 scales: {
                     x: sharedScaleOpts,
                     y: { ...sharedScaleOpts, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ── 30-day trend line chart ───────────────────────────────────────────────
+    const trend30Ctx = document.getElementById('trend30Chart');
+    if (trend30Ctx) {
+        new Chart(trend30Ctx, {
+            type: 'line',
+            data: {
+                labels: @json($trend30Labels),
+                datasets: [{
+                    label: 'Emails Sent',
+                    data: @json($trend30Values),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.10)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#10b981',
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        ...sharedScaleOpts,
+                        ticks: {
+                            ...sharedScaleOpts.ticks,
+                            maxTicksLimit: 10,
+                        }
+                    },
+                    y: { ...sharedScaleOpts, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ── Campaign status donut ─────────────────────────────────────────────────
+    const donutCtx = document.getElementById('campaignDonut');
+    if (donutCtx) {
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: @json($donutLabels),
+                datasets: [{
+                    data: @json($donutValues),
+                    backgroundColor: @json($donutColors),
+                    borderWidth: 2,
+                    borderColor: isDark ? '#1e293b' : '#ffffff',
+                }]
+            },
+            options: {
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: labelColor, font: { size: 11 }, padding: 10, boxWidth: 12 }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Top contacts by opens ─────────────────────────────────────────────────
+    const topContactsCtx = document.getElementById('topContactsChart');
+    if (topContactsCtx) {
+        new Chart(topContactsCtx, {
+            type: 'bar',
+            data: {
+                labels: @json($topContactLabels),
+                datasets: [{
+                    label: 'Opens',
+                    data: @json($topContactValues),
+                    backgroundColor: 'rgba(139,92,246,0.75)',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ...sharedScaleOpts, beginAtZero: true },
+                    y: sharedScaleOpts,
                 }
             }
         });
