@@ -39,8 +39,8 @@
                             </td>
                             <td class="py-3 px-4 text-slate-600 dark:text-slate-300">{{ optional($item->unsubscribed_at)->format('Y-m-d H:i:s') }}</td>
                             <td class="py-3 px-4 text-right">
-                                <form method="POST" action="{{ route('unsubscribes.destroy', $item) }}">
-                                    @csrf @method('DELETE')
+                                <form method="POST" action="{{ route('unsubscribes.delete', $item) }}">
+                                    @csrf
                                     <button type="submit"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-800/50 text-rose-600 dark:text-rose-400 text-xs font-medium hover:bg-rose-50 dark:hover:bg-rose-900/20 transition">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
