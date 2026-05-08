@@ -32,7 +32,7 @@ class CampaignMail extends Mailable
         $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($this->contact->email)]);
 
         return new Envelope(
-            subject: $this->campaign->subject,
+            subject: $this->replaceMergeTags((string) $this->campaign->subject, $this->contact),
             using: [
                 function (\Symfony\Component\Mime\Email $email) use ($unsubscribeUrl) {
                     $email->getHeaders()
