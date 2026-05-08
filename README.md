@@ -1,59 +1,242 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+<img src="public/images/logo.png" alt="Novelio Technologies" width="320">
 
-## About Laravel
+# Bulk Email Platform
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**A self-hosted, multi-SMTP bulk email marketing platform built with Laravel.**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-CDN_JIT-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![License](https://img.shields.io/badge/license-MIT-22C55E?style=flat-square)](LICENSE)
+[![Version](https://img.shields.io/badge/version-v1.8.0-6366F1?style=flat-square)](https://github.com/itsalexwilliam-pixel/bulk-email-platform/releases)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+</div>
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 📖 Overview
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Novelio Bulk Email Platform** is a production-ready, self-hosted email marketing application. Send campaigns through any SMTP server you own — no dependency on Mailchimp, SendGrid, or SES. You control every byte of your data and deliverability infrastructure.
 
-## Laravel Sponsors
+Built for marketers, developers, and agencies who need a reliable, white-label bulk email solution with professional UI and enterprise-grade features.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## ✨ Key Features
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Feature | Description |
+|---------|-------------|
+| 📧 **Campaign Builder** | Rich-text (Quill.js) + Raw HTML editor, file attachments, scheduling |
+| 🌡️ **Email Warm-up** | Built-in warm-up schedule to protect sender reputation |
+| 👥 **Audience Management** | Contacts, Groups, CSV import with per-row error feedback |
+| 📬 **Multi-SMTP Routing** | Unlimited SMTP accounts with priority routing & failover |
+| 📋 **Templates Library** | Reusable email templates, load into campaigns in one click |
+| 📊 **Live Dashboard** | Real-time stats (queued / sent / opened / failed) via Chart.js |
+| 🔓 **Compliance** | Auto unsubscribe footer, `List-Unsubscribe` headers, suppression list |
+| 🎨 **7 Themes** | Light, Dark, Pro Teal, Midnight Navy, Deep Emerald, Royal Purple, Charcoal |
+| 🔒 **Security** | Rate limiting, encrypted SMTP passwords, CSRF, account isolation |
+| ⚙️ **Production Ready** | Laravel Queue, Supervisor config, per-minute throttle |
 
-## Contributing
+> See [FEATURES.md](FEATURES.md) for the complete feature list and USP table.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🖼️ Screenshots
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> Themes preview — Light, Dark, Midnight Navy, Royal Purple
 
-## Security Vulnerabilities
+| Light | Dark |
+|-------|------|
+| Clean white SaaS dashboard | Full Tailwind dark mode |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Midnight Navy | Royal Purple |
+|---------------|--------------|
+| Deep blue corporate | Elegant violet |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 12 · PHP 8.2+ |
+| Frontend CSS | Tailwind CSS (CDN JIT) |
+| Rich text editor | Quill.js 2.0 |
+| Charts | Chart.js |
+| Database | MySQL / SQLite (Eloquent ORM) |
+| Queue | Laravel Queue (database driver) |
+| Process manager | Supervisor |
+| Authentication | Laravel Breeze |
+| Email transport | Symfony Mailer |
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
+
+- PHP **8.2+** with extensions: `mbstring`, `openssl`, `pdo`, `tokenizer`, `xml`, `ctype`, `json`
+- Composer 2.x
+- Node.js 18+ & npm (for asset compilation, optional — CDN is used)
+- MySQL 8+ **or** SQLite 3
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/itsalexwilliam-pixel/bulk-email-platform.git
+cd bulk-email-platform
+
+# 2. Install PHP dependencies
+composer install
+
+# 3. Copy environment file and generate key
+cp .env.example .env
+php artisan key:generate
+
+# 4. Configure your database in .env
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_DATABASE=novelio_mailer
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# 5. Run migrations
+php artisan migrate
+
+# 6. Create your first admin user
+php artisan make:user  # or register via /register
+
+# 7. Start the development server
+php artisan serve
+```
+
+Open **http://127.0.0.1:8000** and log in.
+
+### Queue Worker (required for sending emails)
+
+```bash
+# Development
+php artisan queue:work
+
+# Production (using included supervisor.conf)
+sudo cp supervisor.conf /etc/supervisor/conf.d/novelio-worker.conf
+sudo supervisorctl reread && sudo supervisorctl update
+sudo supervisorctl start novelio-worker:*
+```
+
+---
+
+## ⚙️ Configuration
+
+### `.env` key settings
+
+```dotenv
+APP_NAME="Novelio Technologies"
+APP_ENV=production
+APP_DEBUG=false
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_DATABASE=novelio_mailer
+DB_USERNAME=dbuser
+DB_PASSWORD=dbpassword
+
+QUEUE_CONNECTION=database
+
+LOG_LEVEL=error
+```
+
+### SMTP Servers
+
+SMTP credentials are configured **inside the application** (Settings → SMTP / Sending), not in `.env`. This allows multiple SMTP accounts with per-account priority routing. Passwords are stored encrypted using Laravel's `encrypt()`.
+
+---
+
+## 📂 Project Structure
+
+```
+bulk-email-platform/
+├── app/
+│   ├── Http/Controllers/         # Campaign, Contact, SMTP, Template, Import...
+│   ├── Mail/                     # CampaignMail, SingleEmailMail
+│   ├── Models/                   # Campaign, Contact, Group, SmtpServer, EmailTemplate...
+│   └── Support/TracksEmailContent.php   # Unsubscribe footer trait
+├── database/migrations/          # All schema migrations
+├── resources/views/
+│   ├── campaigns/                # Create, edit, index
+│   ├── contacts/                 # CRUD
+│   ├── groups/
+│   ├── smtp/                     # SMTP management
+│   ├── templates/                # Email templates
+│   ├── import/                   # CSV import + result
+│   ├── layouts/app.blade.php     # Main SaaS layout (7 themes)
+│   └── components/               # Sidebar, navbar, stat-card
+├── routes/web.php
+├── supervisor.conf               # Production queue worker config
+├── FEATURES.md                   # Full feature & USP documentation
+└── README.md                     # This file
+```
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Automation / drip sequences
+- [ ] A/B split testing
+- [ ] Advanced open/click tracking
+- [ ] REST API for external integrations
+- [ ] Team & multi-user accounts (per-account RBAC)
+- [ ] Email preview across popular clients
+
+---
+
+## 📦 Versioning
+
+| Version | Highlights |
+|---------|-----------|
+| v1.0.0 | Initial release — core campaign & contact management |
+| v1.1.0 | Novelio rebrand, SMTP encryption, Quill editor sync fixes |
+| v1.2.0 | Security hardening, rate limiting, Supervisor config |
+| v1.3.0 | Rich account-scoped dashboard (Chart.js) |
+| v1.4.0 | Branded unsubscribe footer & List-Unsubscribe headers |
+| v1.5.0 | Email Templates Library with campaign integration |
+| v1.6.0 | Code refactoring — centralised account ID, real error messages |
+| v1.7.0 | Per-row CSV import validation feedback |
+| **v1.8.0** | **7 themes, Novelio logo/favicon, table layouts, Load Template fix** |
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues and feature requests are welcome!
+
+1. Fork the project
+2. Create your feature branch: `git checkout -b feat/amazing-feature`
+3. Commit your changes: `git commit -m 'feat: add amazing feature'`
+4. Push to the branch: `git push origin feat/amazing-feature`
+5. Open a Pull Request
+
+---
+
+## 🔒 Security
+
+If you discover a security vulnerability, please email the maintainer directly instead of opening a public issue.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Built with ❤️ by [Novelio Technologies](https://github.com/itsalexwilliam-pixel)**
+
+⭐ Star this repo if you find it useful!
+
+</div>
