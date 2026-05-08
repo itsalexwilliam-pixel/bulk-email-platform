@@ -57,6 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/import', [ImportController::class, 'store'])->name('import.store');
 
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
+    Route::delete('/unsubscribes/{unsubscribe}', [UnsubscribeController::class, 'destroy'])->name('unsubscribes.destroy');
     Route::get('/single-email', [SingleEmailController::class, 'create'])->name('single-email.create');
     Route::post('/single-email', [SingleEmailController::class, 'store'])->middleware('throttle:20,1')->name('single-email.store');
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');

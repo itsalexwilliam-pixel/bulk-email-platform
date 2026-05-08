@@ -43,4 +43,11 @@ class UnsubscribeController extends Controller
 
         return view('unsubscribe.index', compact('unsubscribes'));
     }
+
+    public function destroy(Unsubscribe $unsubscribe)
+    {
+        $unsubscribe->delete();
+
+        return redirect()->route('unsubscribes.index')->with('success', 'Email removed from unsubscribe list.');
+    }
 }
