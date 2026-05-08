@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contact;
+use App\Models\EmailOpen;
+use App\Models\EmailQueue;
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -14,6 +17,29 @@ class ContactController extends Controller
     {
         $contacts = Contact::with('groups')->latest()->paginate(10);
         $groups   = Group::orderBy('name')->get();
+
+        // Open counts per contact
+        $contactIds = $contacts->pluck('id');
+        $openCounts = DB::table('email_opens')
+            ->join('email_queue', 'email_queue.id', '=', 'email_opens.email_queue_id')
+            ->whereIn('email_queue.contact_id', $contactIds)
+            ->select('email_queue.contact_id', DB::raw('COUNT(email_opens.id) as open_count'))
+            ->groupBy('email_queue.contact_id')
+            ->pluck('open_count', 'contact_id');
+
+        // Emails sent per contact
+        $sentCounts = DB::table('email_queue')
+            ->whereIn('contact_id', $contactIds)
+            ->where('status', 'sent')
+            ->select('contact_id', DB::raw('COUNT(*) as sent_count'))
+            ->groupBy('contact_id')
+            ->pluck('sent_count', 'contact_id');
+
+        foreach ($contacts as $contact) {
+            $contact->open_count = (int) ($openCounts[$contact->id] ?? 0);
+            $contact->sent_count = (int) ($sentCounts[$contact->id] ?? 0);
+        }
+
         return view('contacts.index', compact('contacts', 'groups'));
     }
 

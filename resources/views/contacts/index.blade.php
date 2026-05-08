@@ -103,6 +103,7 @@
                         <th class="py-3 px-4">Email</th>
                         <th class="py-3 px-4">Website</th>
                         <th class="py-3 px-4">Groups</th>
+                        <th class="py-3 px-4 text-center">Opens</th>
                         <th class="py-3 px-4 w-44">Actions</th>
                     </tr>
                 </thead>
@@ -131,6 +132,18 @@
                                     <span class="text-xs text-slate-400">No groups</span>
                                 @endforelse
                             </td>
+                            <td class="py-3 px-4 text-center">
+                                @if(($contact->sent_count ?? 0) > 0)
+                                    <div class="flex flex-col items-center gap-0.5">
+                                        <span class="text-xs font-semibold {{ ($contact->open_count ?? 0) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400' }}">
+                                            {{ $contact->open_count ?? 0 }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400">/ {{ $contact->sent_count }} sent</span>
+                                    </div>
+                                @else
+                                    <span class="text-xs text-slate-300">—</span>
+                                @endif
+                            </td>
                             <td class="py-3 px-4">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('contacts.edit', $contact) }}"
@@ -148,7 +161,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-500">No contacts found.</td>
+                            <td colspan="8" class="py-8 text-center text-slate-500">No contacts found.</td>
                         </tr>
                     @endforelse
                 </tbody>
