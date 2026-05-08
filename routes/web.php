@@ -38,9 +38,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('groups', GroupController::class)->only(['index', 'store', 'destroy']);
     Route::resource('campaigns', CampaignController::class)->except(['show']);
     Route::get('/campaigns/{campaign}/live-stats', [CampaignController::class, 'liveStats'])->name('campaigns.live-stats');
-    Route::post('/campaigns/{campaign}/send', [SendController::class, 'sendNow'])->name('campaigns.send');
-    Route::post('/campaigns/{campaign}/pause', [SendController::class, 'pause'])->name('campaigns.pause');
-    Route::post('/campaigns/{campaign}/resume', [SendController::class, 'resume'])->name('campaigns.resume');
+    Route::post('/campaigns/{campaign}/send', [SendController::class, 'sendNow'])->middleware('throttle:10,1')->name('campaigns.send');
+    Route::post('/campaigns/{campaign}/pause', [SendController::class, 'pause'])->middleware('throttle:30,1')->name('campaigns.pause');
+    Route::post('/campaigns/{campaign}/resume', [SendController::class, 'resume'])->middleware('throttle:30,1')->name('campaigns.resume');
     Route::post('/campaigns/{campaign}/send-test-email', [CampaignController::class, 'sendTestEmail'])->name('campaigns.send-test-email');
 
     Route::get('/smtp', [SMTPController::class, 'index'])->name('smtp.index');
@@ -49,8 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/smtp/{smtp}', [SMTPController::class, 'update'])->name('smtp.update');
     Route::delete('/smtp/{smtp}', [SMTPController::class, 'destroy'])->name('smtp.destroy');
     Route::patch('/smtp/{smtp}/toggle', [SMTPController::class, 'toggle'])->name('smtp.toggle');
-    Route::post('/smtp/{smtp}/test', [SMTPController::class, 'testConnection'])->name('smtp.test');
-    Route::post('/smtp/{smtp}/send-test-email', [SMTPController::class, 'sendTestEmail'])->name('smtp.send-test-email');
+    Route::post('/smtp/{smtp}/test', [SMTPController::class, 'testConnection'])->middleware('throttle:10,1')->name('smtp.test');
+    Route::post('/smtp/{smtp}/send-test-email', [SMTPController::class, 'sendTestEmail'])->middleware('throttle:10,1')->name('smtp.send-test-email');
     Route::post('/smtp/bulk-upload', [SMTPController::class, 'bulkUpload'])->name('smtp.bulk-upload');
 
     Route::get('/import', [ImportController::class, 'index'])->name('import.index');
@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
     Route::get('/single-email', [SingleEmailController::class, 'create'])->name('single-email.create');
-    Route::post('/single-email', [SingleEmailController::class, 'store'])->name('single-email.store');
+    Route::post('/single-email', [SingleEmailController::class, 'store'])->middleware('throttle:20,1')->name('single-email.store');
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::get('/reports/single-email', [ReportsController::class, 'singleEmailReport'])->name('reports.single-email');
     Route::get('/reports/email/{id}', [ReportsController::class, 'showEmail'])->name('reports.email.show');
