@@ -85,6 +85,9 @@
                                         @if ($user->id === auth()->id())
                                             <span class="ml-1 text-xs text-slate-400">(you)</span>
                                         @endif
+                                        @if (!$user->account_id)
+                                            <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">No account</span>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3.5 text-sm text-slate-600 dark:text-slate-300">
                                         {{ $user->email }}

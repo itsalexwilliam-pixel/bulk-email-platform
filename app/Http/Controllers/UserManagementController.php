@@ -16,7 +16,8 @@ class UserManagementController extends Controller
      */
     public function index(): View
     {
-        $users = User::orderBy('id', 'desc')->paginate(20);
+        $accountId = $this->currentAccountId();
+        $users = User::where('account_id', $accountId)->orderBy('id', 'desc')->paginate(20);
 
         return view('users.index', compact('users'));
     }
@@ -42,10 +43,11 @@ class UserManagementController extends Controller
         ]);
 
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => $validated['role'],
-            'password' => Hash::make($validated['password']),
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'role'       => $validated['role'],
+            'password'   => Hash::make($validated['password']),
+            'account_id' => $request->user()->account_id,
         ]);
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
@@ -118,11 +120,13 @@ class UserManagementController extends Controller
         $deleteAll = (bool) ($data['delete_all'] ?? false);
         $ids = $data['ids'] ?? [];
         $currentUserId = $request->user()->id;
+        $accountId = $this->currentAccountId();
 
         if ($deleteAll) {
-            $validIds = User::where('id', '!=', $currentUserId)->pluck('id')->toArray();
+            $validIds = User::where('account_id', $accountId)->where('id', '!=', $currentUserId)->pluck('id')->toArray();
         } else {
             $validIds = User::whereIn('id', $ids)
+                ->where('account_id', $accountId)
                 ->where('id', '!=', $currentUserId)
                 ->pluck('id')
                 ->toArray();
