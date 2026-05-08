@@ -13,6 +13,7 @@ class Account extends Model
         'name',
         'plan_id',
         'owner_user_id',
+        'webhook_url',
     ];
 
     public function plan(): BelongsTo

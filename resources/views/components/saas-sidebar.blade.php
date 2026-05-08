@@ -8,11 +8,13 @@
         ['label' => 'Drip Campaigns', 'route' => 'drip.index', 'icon' => 'M12 19l9 2-9-18-9 18 9-2zm0 0v-8'],
         ['label' => 'Automations', 'route' => null, 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z'],
         ['label' => 'SMTP / Sending', 'route' => 'smtp.index', 'icon' => 'M3 8l7.89 4.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z'],
+        ['label' => 'SMTP Health', 'route' => 'smtp.health', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
         ['label' => 'Send Single Email', 'route' => 'single-email.create', 'icon' => 'M4 4h16v16H4V4zm2 3v1h12V7H6zm0 3v7h12v-7H6zm2 2h8v1H8v-1zm0 2h6v1H8v-1z'],
         ['label' => 'Campaign Report', 'route' => 'reports.index', 'icon' => 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z'],
         ['label' => 'Single Email Report', 'route' => 'reports.single-email', 'icon' => 'M4 4h16v16H4V4zm2 3v1h12V7H6zm0 3v7h12v-7H6zm2 2h8v1H8v-1zm0 2h6v1H8v-1z'],
         ['label' => 'Unsubscribes', 'route' => 'unsubscribes.index', 'icon' => 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'],
         ['label' => 'Bounces', 'route' => 'bounces.index', 'icon' => 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'],
+        ['label' => 'Suppression List', 'route' => 'suppression.index', 'icon' => 'M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728'],
         ['label' => 'Settings', 'route' => 'settings.index', 'icon' => 'M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z'],
     ];
 

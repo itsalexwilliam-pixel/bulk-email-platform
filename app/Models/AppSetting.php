@@ -14,5 +14,7 @@ class AppSetting extends Model
         'default_from_email',
         'mail_rate_per_minute',
         'timezone',
+        'unsubscribe_logo_url',
+        'unsubscribe_message',
     ];
 }

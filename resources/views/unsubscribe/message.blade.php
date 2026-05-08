@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unsubscribe — {{ config('app.name', 'Novelio Technologies') }}</title>
+    <title>Unsubscribe &mdash; {{ config('app.name', 'Novelio Technologies') }}</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -27,6 +27,8 @@
             text-align: center;
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
         }
+        .logo { margin-bottom: 24px; }
+        .logo img { max-height: 48px; max-width: 200px; object-fit: contain; }
         .icon {
             width: 56px;
             height: 56px;
@@ -60,6 +62,12 @@
 </head>
 <body>
     <div class="card">
+
+        @if(isset($settings) && $settings?->unsubscribe_logo_url)
+            <div class="logo">
+                <img src="{{ $settings->unsubscribe_logo_url }}" alt="{{ config('app.name') }}">
+            </div>
+        @endif
 
         @if(str_contains(strtolower($message), 'unsubscribed') || str_contains(strtolower($message), 'removed'))
             <div class="icon success">

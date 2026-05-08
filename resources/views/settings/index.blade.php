@@ -65,5 +65,85 @@
             </div>
         </form>
     </div>
+
+
+    {{-- Webhook Settings --}}
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Webhook</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            Receive real-time HTTP POST notifications when emails are opened or links are clicked. Leave blank to disable.
+        </p>
+
+        <form method="POST" action="{{ route('settings.webhook') }}" class="space-y-5">
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Webhook URL</label>
+                <input type="url" name="webhook_url" value="{{ old('webhook_url', $account->webhook_url) }}"
+                    placeholder="https://your-app.example.com/webhooks/mailer"
+                    class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                @error('webhook_url')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                <p class="mt-2 text-xs text-slate-400">
+                    Payload: event, email, email_queue_id, campaign_id, contact_id, opened_at/clicked_at, url
+                </p>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 text-sm font-medium">
+                    Save Webhook
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {{-- Unsubscribe Page Branding --}}
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">Unsubscribe Page Branding</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            Customize the page contacts see after clicking the unsubscribe link.
+        </p>
+
+        <form method="POST" action="{{ route('settings.branding') }}" class="space-y-5">
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Logo URL <span class="text-slate-400 font-normal">(optional)</span></label>
+                <input type="url" name="unsubscribe_logo_url" value="{{ old('unsubscribe_logo_url', $settings->unsubscribe_logo_url) }}"
+                    placeholder="https://your-domain.com/images/logo.png"
+                    class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                @error('unsubscribe_logo_url')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                <p class="mt-1 text-xs text-slate-400">Displayed at the top of the unsubscribe confirmation page.</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Custom Message <span class="text-slate-400 font-normal">(optional)</span></label>
+                <textarea name="unsubscribe_message" rows="3" maxlength="1000"
+                    placeholder="You have been unsubscribed. We are sorry to see you go."
+                    class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none">{{ old('unsubscribe_message', $settings->unsubscribe_message) }}</textarea>
+                @error('unsubscribe_message')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                <p class="mt-1 text-xs text-slate-400">Overrides the default unsubscribed message shown to contacts.</p>
+            </div>
+
+            @if($settings->unsubscribe_logo_url || $settings->unsubscribe_message)
+                <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">
+                    <p class="text-xs text-slate-500 mb-3 font-medium uppercase tracking-wide">Preview</p>
+                    <div class="text-center">
+                        @if($settings->unsubscribe_logo_url)
+                            <img src="{{ $settings->unsubscribe_logo_url }}" alt="Logo" class="h-10 mx-auto mb-3 object-contain">
+                        @endif
+                        <p class="text-sm text-slate-700 dark:text-slate-300">{{ $settings->unsubscribe_message ?: 'You have been unsubscribed successfully.' }}</p>
+                    </div>
+                </div>
+            @endif
+
+            <div class="pt-2">
+                <button type="submit" class="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 text-sm font-medium">
+                    Save Branding
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 @endsection

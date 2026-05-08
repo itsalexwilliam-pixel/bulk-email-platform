@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SmtpServer;
+use App\Models\SmtpServerUsage;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -293,6 +295,55 @@ class SMTPController extends Controller
             'smtp_bulk_failed_rows' => $failedRows,
             'success' => "Bulk upload completed. Added {$successCount} SMTP server(s).",
         ]);
+    }
+
+    public function health(Request $request)
+    {
+        $accountId = $this->getAccountId($request);
+
+        $servers = SmtpServer::forAccount($accountId)->orderBy('priority')->orderBy('id')->get();
+
+        $today = Carbon::today()->toDateString();
+        $last7 = Carbon::today()->subDays(6)->toDateString();
+
+        $usageBySmtp = SmtpServerUsage::whereIn('smtp_server_id', $servers->pluck('id'))
+            ->where('usage_date', '>=', $last7)
+            ->get()
+            ->groupBy('smtp_server_id');
+
+        $stats = $servers->map(function (SmtpServer $smtp) use ($usageBySmtp, $today) {
+            $usages = $usageBySmtp->get($smtp->id, collect());
+
+            $todayUsage = $usages->firstWhere('usage_date', $today);
+            $sentToday  = (int) ($todayUsage->sent_count ?? 0);
+            $failToday  = (int) ($todayUsage->fail_count ?? 0);
+            $totalSent7 = $usages->sum('sent_count');
+            $totalFail7 = $usages->sum('fail_count');
+
+            $successRate = ($sentToday + $failToday) > 0
+                ? round(($sentToday / ($sentToday + $failToday)) * 100, 1)
+                : null;
+
+            return [
+                'id'           => $smtp->id,
+                'name'         => $smtp->name,
+                'host'         => $smtp->host,
+                'is_active'    => $smtp->is_active,
+                'daily_limit'  => $smtp->daily_limit,
+                'priority'     => $smtp->priority,
+                'sent_today'   => $sentToday,
+                'fail_today'   => $failToday,
+                'total_sent_7' => $totalSent7,
+                'total_fail_7' => $totalFail7,
+                'success_rate' => $successRate,
+                'last_used_at' => $smtp->last_used_at?->diffForHumans() ?? 'Never',
+                'daily_usage_pct' => $smtp->daily_limit
+                    ? min(100, round(($sentToday / $smtp->daily_limit) * 100))
+                    : null,
+            ];
+        });
+
+        return view('smtp.health', compact('stats'));
     }
 
     private function guardAccountAccess(Request $request, SmtpServer $smtp): void

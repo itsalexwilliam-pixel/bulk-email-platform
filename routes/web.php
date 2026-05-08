@@ -16,6 +16,7 @@ use App\Http\Controllers\SendController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SingleEmailController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\SuppressionController;
 use App\Http\Controllers\UnsubscribeController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
 
     Route::get('/smtp', [SMTPController::class, 'index'])->name('smtp.index');
+    Route::get('/smtp-health', [SMTPController::class, 'health'])->name('smtp.health');
     Route::post('/smtp', [SMTPController::class, 'store'])->name('smtp.store');
     Route::get('/smtp/{smtp}/edit', [SMTPController::class, 'edit'])->name('smtp.edit');
     Route::put('/smtp/{smtp}', [SMTPController::class, 'update'])->name('smtp.update');
@@ -69,6 +71,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/unsubscribes', [UnsubscribeController::class, 'index'])->name('unsubscribes.index');
     Route::delete('/unsubscribes/{unsubscribe}', [UnsubscribeController::class, 'destroy'])->name('unsubscribes.destroy');
 
+    // Suppression List
+    Route::get('/suppression', [SuppressionController::class, 'index'])->name('suppression.index');
+    Route::post('/suppression', [SuppressionController::class, 'store'])->name('suppression.store');
+    Route::delete('/suppression/{suppression}', [SuppressionController::class, 'destroy'])->name('suppression.destroy');
+    Route::post('/suppression/bulk-import', [SuppressionController::class, 'bulkImport'])->name('suppression.bulk-import');
+
     // Bounces
     Route::get('/bounces', [BounceController::class, 'index'])->name('bounces.index');
     Route::post('/contacts/{contact}/mark-bounced', [BounceController::class, 'markBounced'])->name('contacts.mark-bounced');
@@ -83,6 +91,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::put('/settings/webhook', [SettingsController::class, 'updateWebhook'])->name('settings.webhook');
+    Route::put('/settings/branding', [SettingsController::class, 'updateBranding'])->name('settings.branding');
 
     // Drip Campaigns
     Route::get('/drip', [DripCampaignController::class, 'index'])->name('drip.index');

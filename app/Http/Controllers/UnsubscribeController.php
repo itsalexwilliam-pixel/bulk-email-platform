@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AppSetting;
 use App\Models\Contact;
 use App\Models\Unsubscribe;
 use Illuminate\Http\Request;
@@ -12,10 +13,12 @@ class UnsubscribeController extends Controller
     {
         $decoded = urldecode($email);
         $normalized = strtolower(trim($decoded));
+        $settings = AppSetting::first();
 
         if (!filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
             return response()->view('unsubscribe.message', [
-                'message' => 'Your unsubscribe request could not be processed. Please check the link.',
+                'message'  => 'Your unsubscribe request could not be processed. Please check the link.',
+                'settings' => $settings,
             ], 200);
         }
 
@@ -24,14 +27,19 @@ class UnsubscribeController extends Controller
         Unsubscribe::updateOrCreate(
             ['email' => $normalized],
             [
-                'contact_id' => $contact?->id,
+                'contact_id'      => $contact?->id,
                 'unsubscribed_at' => now(),
-                'created_at' => now(),
+                'created_at'      => now(),
             ]
         );
 
+        $message = ($settings && $settings->unsubscribe_message)
+            ? $settings->unsubscribe_message
+            : 'You have been unsubscribed successfully.';
+
         return response()->view('unsubscribe.message', [
-            'message' => 'You have been unsubscribed successfully.',
+            'message'  => $message,
+            'settings' => $settings,
         ], 200);
     }
 

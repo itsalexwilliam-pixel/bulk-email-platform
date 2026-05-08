@@ -266,6 +266,20 @@ class WorkMailsQueueCommand extends Command
         }
 
         $accountId = (int) ($item->campaign?->account_id ?? 0);
+
+        $isSuppressed = \App\Models\SuppressionEntry::where('account_id', $accountId)
+            ->whereRaw('LOWER(email) = ?', [strtolower($item->email)])
+            ->exists();
+
+        if ($isSuppressed) {
+            $item->update([
+                'status' => 'failed',
+                'attempts' => 3,
+                'last_error' => 'Suppressed',
+            ]);
+            $this->warn("Skipped suppressed email: {$item->email}");
+            return false;
+        }
         if ($accountId <= 0) {
             $item->update([
                 'attempts' => $item->attempts + 1,

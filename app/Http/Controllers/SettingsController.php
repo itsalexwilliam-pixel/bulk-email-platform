@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\AppSetting;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,10 @@ class SettingsController extends Controller
             ]);
         }
 
-        return view('settings.index', compact('settings'));
+        $accountId = $this->currentAccountId();
+        $account = Account::findOrFail($accountId);
+
+        return view('settings.index', compact('settings', 'account'));
     }
 
     public function update(Request $request)
@@ -43,5 +47,38 @@ class SettingsController extends Controller
         $settings->save();
 
         return redirect()->route('settings.index')->with('success', 'Settings updated successfully.');
+    }
+
+    public function updateWebhook(Request $request)
+    {
+        $request->validate([
+            'webhook_url' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        $accountId = $this->currentAccountId();
+        $account = Account::findOrFail($accountId);
+        $account->webhook_url = $request->input('webhook_url') ?: null;
+        $account->save();
+
+        return redirect()->route('settings.index')->with('success', 'Webhook URL saved.');
+    }
+
+    public function updateBranding(Request $request)
+    {
+        $request->validate([
+            'unsubscribe_logo_url' => ['nullable', 'url', 'max:500'],
+            'unsubscribe_message'  => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $settings = AppSetting::first();
+        if (!$settings) {
+            $settings = new AppSetting();
+        }
+
+        $settings->unsubscribe_logo_url = $request->input('unsubscribe_logo_url') ?: null;
+        $settings->unsubscribe_message  = $request->input('unsubscribe_message') ?: null;
+        $settings->save();
+
+        return redirect()->route('settings.index')->with('success', 'Unsubscribe page branding saved.');
     }
 }

@@ -53,13 +53,16 @@ class ProcessDripsCommand extends Command
             return;
         }
 
-        // Skip unsubscribed / bounced
+        // Skip unsubscribed / bounced / suppressed
         $isUnsubscribed = Unsubscribe::whereRaw('LOWER(email) = ?', [strtolower($contact->email)])->exists();
         $isBounced      = $contact->is_bounced ?? false;
+        $isSuppressed   = \App\Models\SuppressionEntry::where('account_id', $drip->account_id)
+            ->whereRaw('LOWER(email) = ?', [strtolower($contact->email)])
+            ->exists();
 
-        if ($isUnsubscribed || $isBounced) {
+        if ($isUnsubscribed || $isBounced || $isSuppressed) {
             $enrollment->update(['status' => 'unsubscribed']);
-            $this->warn("Skipped {$contact->email} (unsubscribed/bounced)");
+            $this->warn("Skipped {$contact->email} (unsubscribed/bounced/suppressed)");
             return;
         }
 
