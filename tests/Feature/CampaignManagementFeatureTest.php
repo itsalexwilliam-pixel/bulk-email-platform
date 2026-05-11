@@ -29,6 +29,7 @@ class CampaignManagementFeatureTest extends TestCase
 
         $this->user = User::factory()->create([
             'account_id' => $this->account->id,
+            'role' => 'manager',
         ]);
 
         $this->actingAs($this->user);

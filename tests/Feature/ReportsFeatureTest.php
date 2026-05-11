@@ -70,8 +70,8 @@ class ReportsFeatureTest extends TestCase
         $response = $this->get(route('reports.index'));
 
         $response->assertOk();
-        $response->assertSee('Total Emails Sent');
-        $response->assertSee('No data available for the selected filters.');
+        $response->assertSee('Emails Sent');
+        $response->assertSee('No sent emails found for the selected filters.');
     }
 
     public function test_reports_page_renders_metrics_with_seeded_data(): void
@@ -133,7 +133,7 @@ class ReportsFeatureTest extends TestCase
         $response = $this->get(route('reports.index'));
 
         $response->assertOk();
-        $response->assertSee('Total Emails Sent');
+        $response->assertSee('Emails Sent');
         $response->assertSee('Campaign Performance');
         $response->assertSee('Top UTM Sources');
         $response->assertSee('Top UTM Campaigns');

@@ -1,7 +1,11 @@
-# TODO - Campaign Group Select Issue
+# TODO - Open/Click Issue Fix and Latest Push
 
-- [x] Verify DB/account mapping for groups and contacts
-- [x] Identify root cause for empty groups list in campaign create
-- [x] Implement targeted fix (controller/view/data handling as needed)
-- [x] Add empty-state UX message for no groups
-- [x] Validate behavior through critical-path checks
+- [ ] Reproduce and identify broken open/click behaviors across main modules
+- [ ] Inspect relevant routes, controllers, and Blade views tied to broken actions
+- [ ] Implement fixes for identified open/click issues
+- [ ] Run automated test suite (`php artisan test`) and verify pass status
+- [ ] Validate core UI navigation/open-click flow after fixes
+- [ ] Prepare git branch `blackboxai/fix-open-click-issues`
+- [ ] Commit fixes with clear message
+- [ ] Add/update remote for `https://github.com/itsalexwilliam-pixel/bulk-email-platform.git`
+- [ ] Push latest fixed code to remote branch
