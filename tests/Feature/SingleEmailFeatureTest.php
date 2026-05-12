@@ -211,7 +211,7 @@ class SingleEmailFeatureTest extends TestCase
         $this->assertSame('sample.pdf', $queue->attachments[0]['name']);
     }
 
-    public function test_tracking_links_and_open_pixel_are_present_in_generated_email(): void
+    public function test_tracking_links_and_minimal_unsubscribe_footer_are_present_in_generated_email(): void
     {
         Storage::fake('local');
 
@@ -232,7 +232,11 @@ class SingleEmailFeatureTest extends TestCase
 
         $this->assertMatchesRegularExpression('/<a\s+[^>]*href=("|\')https?:\/\/[^"\']+\1[^>]*>/i', $html);
         $this->assertStringContainsString('/track/click/', $html);
-        $this->assertStringContainsString(route('track.open', ['id' => $queue->id]), $html);
+        $this->assertStringNotContainsString(route('track.open', ['id' => $queue->id]), $html);
+        $this->assertStringContainsString("If you'd prefer not to hear from us again, you can", $html);
+        $this->assertStringContainsString(route('unsubscribe', ['email' => rawurlencode('receiver@example.test')]), $html);
+        $this->assertStringNotContainsString('subscribed to communications', $html);
+        $this->assertStringNotContainsString('All rights reserved', $html);
         $this->assertStringNotContainsString('&amp;', $html);
         $this->assertMatchesRegularExpression('/href="[^"]+"/', $html);
         $this->assertStringNotContainsString('/track/click?url=/unsubscribe', $html);
