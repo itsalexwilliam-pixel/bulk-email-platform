@@ -63,15 +63,14 @@ class WorkMailsQueueCommand extends Command
                 continue;
             }
 
-            if (!is_null($targetCampaignId)) {
-                if ((int) $campaign->id !== $targetCampaignId) {
-                    continue;
-                }
+            if (!is_null($targetCampaignId) && (int) $campaign->id !== $targetCampaignId) {
+                continue;
+            }
 
-                if ((string) $campaign->status !== 'sending') {
-                    $this->line("Campaign #{$campaign->id} skipped in campaign mode: status={$campaign->status} (must be sending).");
-                    continue;
-                }
+            // Always process only actively sending campaigns.
+            if ((string) $campaign->status !== 'sending') {
+                $this->line("Campaign #{$campaign->id} skipped: status={$campaign->status} (must be sending).");
+                continue;
             }
 
             $effectiveCap = $this->resolveEffectiveCap($campaign, $fallbackLimit);
@@ -146,6 +145,17 @@ class WorkMailsQueueCommand extends Command
         $finalCampaignIds = collect(array_keys($processedPerCampaign))->filter()->values();
 
         foreach ($finalCampaignIds as $campaignId) {
+            $campaign = Campaign::find($campaignId);
+            if (!$campaign) {
+                continue;
+            }
+
+            // Preserve manual pause; do not auto-transition paused campaigns.
+            if ((string) $campaign->status === 'paused') {
+                $this->line("Campaign #{$campaignId} status preserved: paused");
+                continue;
+            }
+
             $campaignQueue = EmailQueue::where('campaign_id', $campaignId);
 
             $hasSendable = (clone $campaignQueue)
@@ -162,19 +172,19 @@ class WorkMailsQueueCommand extends Command
             $failedCount = (clone $campaignQueue)->where('status', 'failed')->count();
 
             if ($hasSendable) {
-                Campaign::where('id', $campaignId)->update(['status' => 'sending']);
+                $campaign->update(['status' => 'sending']);
                 $this->line("Campaign #{$campaignId} status => sending");
             } elseif ($totalCount > 0 && $sentCount === $totalCount) {
-                Campaign::where('id', $campaignId)->update(['status' => 'completed']);
+                $campaign->update(['status' => 'completed']);
                 $this->line("Campaign #{$campaignId} status => completed");
             } elseif ($totalCount > 0 && $failedCount === $totalCount) {
-                Campaign::where('id', $campaignId)->update(['status' => 'paused']);
+                $campaign->update(['status' => 'paused']);
                 $this->line("Campaign #{$campaignId} status => paused (all queue rows failed)");
             } elseif ($totalCount > 0 && $sentCount > 0) {
-                Campaign::where('id', $campaignId)->update(['status' => 'completed']);
+                $campaign->update(['status' => 'completed']);
                 $this->line("Campaign #{$campaignId} status => completed (partial success, no sendable rows)");
             } else {
-                Campaign::where('id', $campaignId)->update(['status' => 'scheduled']);
+                $campaign->update(['status' => 'scheduled']);
                 $this->line("Campaign #{$campaignId} status => scheduled (no sendable rows)");
             }
         }

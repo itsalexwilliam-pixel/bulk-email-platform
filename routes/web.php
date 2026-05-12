@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
 
     // Reports - all roles
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/warmup', [ReportsController::class, 'warmupReport'])->name('reports.warmup');
     Route::get('/reports/single-email', [ReportsController::class, 'singleEmailReport'])->name('reports.single-email');
     Route::get('/reports/email/{id}', [ReportsController::class, 'showEmail'])->name('reports.email.show');
     Route::get('/reports/campaign/{campaign_id}', [ReportsController::class, 'campaignDetail'])->name('reports.campaign.detail');

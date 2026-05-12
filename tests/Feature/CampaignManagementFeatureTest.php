@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Mail\CampaignMail;
 use App\Models\Campaign;
 use App\Models\Contact;
+use App\Models\EmailQueue;
 use App\Models\Group;
+use App\Models\SmtpServer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -183,5 +188,148 @@ class CampaignManagementFeatureTest extends TestCase
 
         $response->assertRedirect(route('campaigns.index'));
         $this->assertDatabaseMissing('campaigns', ['id' => $campaign->id]);
+    }
+
+    public function test_work_mails_skips_paused_campaign_queue_items(): void
+    {
+        Mail::fake();
+        $this->actingAsUser();
+
+        $contact = Contact::create([
+            'account_id' => $this->account->id,
+            'name' => 'Paused Contact',
+            'email' => 'paused@example.com',
+        ]);
+
+        $campaign = Campaign::create([
+            'account_id' => $this->account->id,
+            'name' => 'Paused Campaign',
+            'subject' => 'Paused Subject',
+            'body' => '<p>Paused</p>',
+            'status' => 'paused',
+            'warmup_enabled' => true,
+            'warmup_started_at' => now(),
+            'warmup_day' => 1,
+        ]);
+
+        EmailQueue::create([
+            'account_id' => $this->account->id,
+            'campaign_id' => $campaign->id,
+            'contact_id' => $contact->id,
+            'email' => $contact->email,
+            'type' => 'campaign',
+            'subject' => $campaign->subject,
+            'body' => $campaign->body,
+            'status' => 'pending',
+            'attempts' => 0,
+        ]);
+
+        SmtpServer::create([
+            'account_id' => $this->account->id,
+            'name' => 'SMTP',
+            'host' => 'smtp.example.com',
+            'port' => 587,
+            'username' => 'user',
+            'password' => encrypt('pass'),
+            'encryption' => 'tls',
+            'from_email' => 'from@example.com',
+            'from_name' => 'Mailer',
+            'is_active' => true,
+            'daily_limit' => 1000,
+        ]);
+
+        Artisan::call('queue:work-mails', ['--limit' => 60]);
+
+        $this->assertDatabaseHas('email_queue', [
+            'campaign_id' => $campaign->id,
+            'contact_id' => $contact->id,
+            'status' => 'pending',
+            'attempts' => 0,
+        ]);
+
+        $this->assertDatabaseHas('campaigns', [
+            'id' => $campaign->id,
+            'status' => 'paused',
+        ]);
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_warmup_cap_limits_sends_per_run_for_sending_campaign(): void
+    {
+        Mail::fake();
+        $this->actingAsUser();
+
+        $campaign = Campaign::create([
+            'account_id' => $this->account->id,
+            'name' => 'Warmup Campaign',
+            'subject' => 'Warmup Subject',
+            'body' => '<p>Warmup</p>',
+            'status' => 'sending',
+            'warmup_enabled' => true,
+            'warmup_started_at' => now(),
+            'warmup_day' => 1, // day 1 cap = 10 from model schedule
+            'emails_per_minute' => 1000,
+        ]);
+
+        SmtpServer::create([
+            'account_id' => $this->account->id,
+            'name' => 'SMTP',
+            'host' => 'smtp.example.com',
+            'port' => 587,
+            'username' => 'user',
+            'password' => encrypt('pass'),
+            'encryption' => 'tls',
+            'from_email' => 'from@example.com',
+            'from_name' => 'Mailer',
+            'is_active' => true,
+            'daily_limit' => 1000,
+        ]);
+
+        for ($i = 1; $i <= 12; $i++) {
+            $contact = Contact::create([
+                'account_id' => $this->account->id,
+                'name' => 'Warmup ' . $i,
+                'email' => "warmup{$i}@example.com",
+            ]);
+
+            EmailQueue::create([
+                'account_id' => $this->account->id,
+                'campaign_id' => $campaign->id,
+                'contact_id' => $contact->id,
+                'email' => $contact->email,
+                'type' => 'campaign',
+                'subject' => $campaign->subject,
+                'body' => $campaign->body,
+                'status' => 'pending',
+                'attempts' => 0,
+            ]);
+        }
+
+        Artisan::call('queue:work-mails', ['--campaign_id' => $campaign->id, '--limit' => 60]);
+
+        $sentCount = EmailQueue::where('campaign_id', $campaign->id)->where('status', 'sent')->count();
+        $pendingCount = EmailQueue::where('campaign_id', $campaign->id)->where('status', 'pending')->count();
+
+        $this->assertSame(10, $sentCount);
+        $this->assertSame(2, $pendingCount);
+        Mail::assertSent(CampaignMail::class, 10);
+    }
+
+    public function test_warmup_day_is_capped_at_21_days(): void
+    {
+        $campaign = Campaign::create([
+            'account_id' => 1,
+            'name' => '21 Day Warmup',
+            'subject' => 'Subject',
+            'body' => '<p>Body</p>',
+            'status' => 'draft',
+            'warmup_enabled' => true,
+            'warmup_started_at' => now()->subDays(40),
+            'warmup_day' => 1,
+        ]);
+
+        $this->assertSame(21, $campaign->getEffectiveWarmupDay());
+        $this->assertSame(210, $campaign->currentWarmupCap());
     }
 }
