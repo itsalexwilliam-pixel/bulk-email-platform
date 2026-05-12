@@ -1,7 +1,10 @@
-# TODO - Campaign Group Select Issue
+# TODO - Email Footer + Tracking Simplification
 
-- [x] Verify DB/account mapping for groups and contacts
-- [x] Identify root cause for empty groups list in campaign create
-- [x] Implement targeted fix (controller/view/data handling as needed)
-- [x] Add empty-state UX message for no groups
-- [x] Validate behavior through critical-path checks
+- [x] Locate email footer/tracking injection source
+- [x] Replace footer with minimal unsubscribe-only plain-text style
+- [x] Remove subscription statement and branding/footer legal text
+- [x] Disable open-tracking pixel image injection
+- [x] Preserve unsubscribe link functionality
+- [x] Preserve click tracking and avoid rewriting unsubscribe URLs
+- [ ] Run targeted tests (`tests/Feature/SingleEmailFeatureTest.php`)
+- [ ] Run full test suite (`php artisan test`)

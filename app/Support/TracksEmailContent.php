@@ -13,32 +13,17 @@ trait TracksEmailContent
     ): string {
         $html = $this->rewriteLinksForTracking($html, $queueId, $utm);
 
-        $openUrl = route('track.open', ['id' => $queueId]);
-        $pixel = '<img src="' . e($openUrl) . '" alt="" width="1" height="1" style="display:none;" />';
-
-        $injection = $pixel;
+        $injection = '';
 
         if ($includeUnsubscribe && !empty($unsubscribeEmail)) {
             $unsubscribeUrl = route('unsubscribe', ['email' => rawurlencode($unsubscribeEmail)]);
-            $appName = config('app.name', 'Novelio Technologies');
-
             $unsubscribeHtml = '
-<div style="margin-top:32px;padding-top:24px;border-top:1px solid #e5e7eb;text-align:center;font-family:Arial,Helvetica,sans-serif;">
-    <p style="margin:0 0 6px 0;font-size:12px;color:#9ca3af;line-height:1.5;">
-        You are receiving this email because you subscribed to communications from
-        <strong style="color:#6b7280;">' . e($appName) . '</strong>.
-    </p>
-    <p style="margin:0 0 10px 0;font-size:12px;color:#9ca3af;line-height:1.5;">
-        If you no longer wish to receive these emails, you can
-        <a href="' . e($unsubscribeUrl) . '"
-           style="color:#6366f1;text-decoration:underline;font-weight:600;">unsubscribe here</a>.
-    </p>
-    <p style="margin:0;font-size:11px;color:#d1d5db;">
-        &copy; ' . date('Y') . ' ' . e($appName) . '. All rights reserved.
-    </p>
+<div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6b7280;">
+    If you\'d prefer not to hear from us again, you can
+    <a href="' . e($unsubscribeUrl) . '" style="color:#374151;text-decoration:underline;">unsubscribe here</a>.
 </div>';
 
-            $injection = $unsubscribeHtml . $pixel;
+            $injection = $unsubscribeHtml;
         }
 
         if (stripos($html, '</body>') !== false) {

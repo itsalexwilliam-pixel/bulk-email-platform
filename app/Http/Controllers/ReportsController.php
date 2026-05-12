@@ -302,6 +302,74 @@ class ReportsController extends Controller
         ));
     }
 
+    // ── Warmup Report ──────────────────────────────────────────────────────────
+    public function warmupReport(Request $request): View
+    {
+        $accountId = (int) ($request->user()->account_id ?? 0);
+
+        $todayStart = now()->startOfDay();
+        $todayEnd   = now()->endOfDay();
+
+        $rows = Campaign::query()
+            ->where('account_id', $accountId)
+            ->where('warmup_enabled', true)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function (Campaign $campaign) use ($todayStart, $todayEnd) {
+                $effectiveDay = $campaign->getEffectiveWarmupDay();
+                $cap = $campaign->currentWarmupCap();
+
+                $todaySent = EmailQueue::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->where('status', 'sent')
+                    ->whereBetween('sent_at', [$todayStart, $todayEnd])
+                    ->count();
+
+                $queuedCount = EmailQueue::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->whereIn('status', ['pending', 'queued'])
+                    ->count();
+
+                $sentCount = EmailQueue::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->where('status', 'sent')
+                    ->count();
+
+                $failedCount = EmailQueue::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->where('status', 'failed')
+                    ->count();
+
+                $saturation = $cap > 0 ? round(($todaySent / $cap) * 100, 2) : 0;
+
+                return (object) [
+                    'id' => $campaign->id,
+                    'name' => $campaign->name,
+                    'status' => $campaign->status,
+                    'warmup_started_at' => $campaign->warmup_started_at,
+                    'warmup_day' => $effectiveDay,
+                    'warmup_cap' => $cap,
+                    'today_sent' => $todaySent,
+                    'queued_count' => $queuedCount,
+                    'sent_count' => $sentCount,
+                    'failed_count' => $failedCount,
+                    'saturation_percent' => $saturation,
+                ];
+            });
+
+        $summary = [
+            'campaigns_in_warmup' => $rows->count(),
+            'total_today_sent' => (int) $rows->sum('today_sent'),
+            'total_today_cap' => (int) $rows->sum('warmup_cap'),
+            'avg_saturation_percent' => $rows->count() > 0 ? round((float) $rows->avg('saturation_percent'), 2) : 0,
+        ];
+
+        return view('reports.warmup', [
+            'summary' => $summary,
+            'rows' => $rows,
+        ]);
+    }
+
     // ── Single Email Report ────────────────────────────────────────────────────
     public function singleEmailReport(Request $request): View
     {

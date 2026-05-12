@@ -22,6 +22,7 @@ class ContactManagementFeatureTest extends TestCase
 
         $user = User::factory()->create([
             'account_id' => $accountId,
+            'role' => 'manager',
         ]);
 
         $this->actingAs($user);

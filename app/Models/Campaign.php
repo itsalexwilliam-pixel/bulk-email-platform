@@ -9,11 +9,25 @@ class Campaign extends Model
     public const WARMUP_SCHEDULE = [
         1 => 10,
         2 => 20,
-        3 => 40,
-        4 => 50,
-        5 => 60,
-        6 => 70,
-        7 => 80,
+        3 => 30,
+        4 => 40,
+        5 => 50,
+        6 => 60,
+        7 => 70,
+        8 => 80,
+        9 => 90,
+        10 => 100,
+        11 => 110,
+        12 => 120,
+        13 => 130,
+        14 => 140,
+        15 => 150,
+        16 => 160,
+        17 => 170,
+        18 => 180,
+        19 => 190,
+        20 => 200,
+        21 => 210,
     ];
 
     protected $fillable = [
@@ -55,13 +69,13 @@ class Campaign extends Model
     public function getEffectiveWarmupDay(): int
     {
         if (empty($this->warmup_started_at)) {
-            return max(1, min(7, (int) ($this->warmup_day ?: 1)));
+            return max(1, min(21, (int) ($this->warmup_day ?: 1)));
         }
 
         $elapsedDays = $this->warmup_started_at->startOfDay()->diffInDays(now()->startOfDay());
         $calculatedDay = 1 + $elapsedDays;
 
-        return max(1, min(7, $calculatedDay));
+        return max(1, min(21, $calculatedDay));
     }
 
     public function syncWarmupProgress(): void
@@ -78,6 +92,6 @@ class Campaign extends Model
     {
         $day = $this->getEffectiveWarmupDay();
 
-        return self::WARMUP_SCHEDULE[$day] ?? self::WARMUP_SCHEDULE[7];
+        return self::WARMUP_SCHEDULE[$day] ?? self::WARMUP_SCHEDULE[21];
     }
 }

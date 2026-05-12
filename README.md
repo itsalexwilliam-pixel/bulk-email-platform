@@ -10,7 +10,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-CDN_JIT-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![License](https://img.shields.io/badge/license-MIT-22C55E?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v1.8.0-6366F1?style=flat-square)](https://github.com/itsalexwilliam-pixel/bulk-email-platform/releases)
+[![Version](https://img.shields.io/badge/version-v1.1.0-6366F1?style=flat-square)](https://github.com/itsalexwilliam-pixel/bulk-email-platform/releases)
 
 </div>
 
@@ -29,11 +29,12 @@ Built for marketers, developers, and agencies who need a reliable, white-label b
 | Feature | Description |
 |---------|-------------|
 | 📧 **Campaign Builder** | Rich-text (Quill.js) + Raw HTML editor, file attachments, scheduling |
-| 🌡️ **Email Warm-up** | Built-in warm-up schedule to protect sender reputation |
+| 🌡️ **Email Warm-up (21-Day)** | Built-in 21-day warm-up schedule to protect sender reputation |
 | 👥 **Audience Management** | Contacts, Groups, CSV import with per-row error feedback |
 | 📬 **Multi-SMTP Routing** | Unlimited SMTP accounts with priority routing & failover |
 | 📋 **Templates Library** | Reusable email templates, load into campaigns in one click |
 | 📊 **Live Dashboard** | Real-time stats (queued / sent / opened / failed) via Chart.js |
+| 📈 **Unified Reports Hub** | One sidebar Reports entry with Campaign, Single Email, and Warmup reports |
 | 🔓 **Compliance** | Auto unsubscribe footer, `List-Unsubscribe` headers, suppression list |
 | 🎨 **7 Themes** | Light, Dark, Pro Teal, Midnight Navy, Deep Emerald, Royal Purple, Charcoal |
 | 🔒 **Security** | Rate limiting, encrypted SMTP passwords, CSRF, account isolation |
@@ -197,15 +198,7 @@ bulk-email-platform/
 
 | Version | Highlights |
 |---------|-----------|
-| v1.0.0 | Initial release — core campaign & contact management |
-| v1.1.0 | Novelio rebrand, SMTP encryption, Quill editor sync fixes |
-| v1.2.0 | Security hardening, rate limiting, Supervisor config |
-| v1.3.0 | Rich account-scoped dashboard (Chart.js) |
-| v1.4.0 | Branded unsubscribe footer & List-Unsubscribe headers |
-| v1.5.0 | Email Templates Library with campaign integration |
-| v1.6.0 | Code refactoring — centralised account ID, real error messages |
-| v1.7.0 | Per-row CSV import validation feedback |
-| **v1.8.0** | **7 themes, Novelio logo/favicon, table layouts, Load Template fix** |
+| **v1.1.0** | **Paused campaign queue safety, 21-day warmup schedule, Warmup Report, unified Reports sidebar entry, and reports test coverage updates** |
 
 ---
 

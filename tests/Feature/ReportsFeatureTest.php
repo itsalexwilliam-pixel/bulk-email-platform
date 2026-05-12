@@ -70,8 +70,8 @@ class ReportsFeatureTest extends TestCase
         $response = $this->get(route('reports.index'));
 
         $response->assertOk();
-        $response->assertSee('Total Emails Sent');
-        $response->assertSee('No data available for the selected filters.');
+        $response->assertSee('Emails Sent');
+        $response->assertSee('No sent emails found for the selected filters.');
     }
 
     public function test_reports_page_renders_metrics_with_seeded_data(): void
@@ -133,7 +133,7 @@ class ReportsFeatureTest extends TestCase
         $response = $this->get(route('reports.index'));
 
         $response->assertOk();
-        $response->assertSee('Total Emails Sent');
+        $response->assertSee('Emails Sent');
         $response->assertSee('Campaign Performance');
         $response->assertSee('Top UTM Sources');
         $response->assertSee('Top UTM Campaigns');
@@ -329,5 +329,95 @@ class ReportsFeatureTest extends TestCase
 
         $response = $this->actingAs($userA)->getJson(route('reports.email.show', ['id' => $queueIdForB]));
         $response->assertNotFound();
+    }
+
+    public function test_warmup_report_page_loads_and_shows_warmup_details(): void
+    {
+        $user = $this->actingAsAccountUser();
+        $accountId = (int) $user->account_id;
+
+        $campaignId = DB::table('campaigns')->insertGetId([
+            'account_id' => $accountId,
+            'name' => 'Warmup Alpha',
+            'subject' => 'Warmup Subject',
+            'body' => '<p>Warmup Body</p>',
+            'status' => 'sending',
+            'warmup_enabled' => 1,
+            'warmup_day' => 3,
+            'warmup_started_at' => now()->subDays(2),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('email_queue')->insert([
+            [
+                'account_id' => $accountId,
+                'campaign_id' => $campaignId,
+                'contact_id' => null,
+                'email' => 'w1@example.com',
+                'subject' => 'Warmup Subject',
+                'body' => '<p>Body</p>',
+                'status' => 'sent',
+                'sent_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'account_id' => $accountId,
+                'campaign_id' => $campaignId,
+                'contact_id' => null,
+                'email' => 'w2@example.com',
+                'subject' => 'Warmup Subject',
+                'body' => '<p>Body</p>',
+                'status' => 'queued',
+                'sent_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $response = $this->get(route('reports.warmup'));
+
+        $response->assertOk();
+        $response->assertSee('Warmup Report');
+        $response->assertSee('Warmup Campaign Details');
+        $response->assertSee('Warmup Alpha');
+        $response->assertSee('Today Sent');
+        $response->assertSee('Daily Cap');
+    }
+
+    public function test_warmup_report_is_scoped_to_account(): void
+    {
+        $accountA = $this->createAccountId();
+        $accountB = $this->createAccountId();
+
+        $userA = User::factory()->create(['account_id' => $accountA]);
+        DB::table('accounts')->where('id', $accountA)->update(['owner_user_id' => $userA->id]);
+        DB::table('account_user')->insert([
+            'account_id' => $accountA,
+            'user_id' => $userA->id,
+            'role' => 'owner',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('campaigns')->insert([
+            'account_id' => $accountB,
+            'name' => 'Other Account Warmup',
+            'subject' => 'Subject',
+            'body' => '<p>Body</p>',
+            'status' => 'sending',
+            'warmup_enabled' => 1,
+            'warmup_day' => 2,
+            'warmup_started_at' => now()->subDay(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($userA)->get(route('reports.warmup'));
+
+        $response->assertOk();
+        $response->assertDontSee('Other Account Warmup');
+        $response->assertSee('No warmup-enabled campaigns found for this account.');
     }
 }
