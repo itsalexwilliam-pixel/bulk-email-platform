@@ -420,4 +420,49 @@ class ReportsFeatureTest extends TestCase
         $response->assertDontSee('Other Account Warmup');
         $response->assertSee('No warmup-enabled campaigns found for this account.');
     }
+
+    public function test_campaign_detail_unsubscribes_are_counted_from_first_send_window(): void
+    {
+        $user = $this->actingAsAccountUser();
+        $accountId = (int) $user->account_id;
+
+        $campaignId = DB::table('campaigns')->insertGetId([
+            'account_id' => $accountId,
+            'name' => 'Campaign Detail Unsub Timing',
+            'subject' => 'Subject',
+            'body' => '<p>Body</p>',
+            'status' => 'sending',
+            'scheduled_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $firstSentAt = now()->subDay();
+
+        DB::table('email_queue')->insert([
+            'account_id' => $accountId,
+            'campaign_id' => $campaignId,
+            'contact_id' => null,
+            'email' => 'timed@example.com',
+            'subject' => 'Subject',
+            'body' => '<p>Body</p>',
+            'status' => 'sent',
+            'sent_at' => $firstSentAt,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('unsubscribes')->insert([
+            'contact_id' => null,
+            'email' => 'timed@example.com',
+            'unsubscribed_at' => $firstSentAt->copy()->addHour(),
+            'created_at' => $firstSentAt->copy()->addHour(),
+        ]);
+
+        $response = $this->get(route('reports.campaign.detail', ['campaign_id' => $campaignId]));
+
+        $response->assertOk();
+        $response->assertSee('Unsubscribes');
+        $response->assertSee('1');
+    }
 }

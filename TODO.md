@@ -1,10 +1,8 @@
-# TODO - Email Footer + Tracking Simplification
+# TODO - Campaign detail enhancements
 
-- [x] Locate email footer/tracking injection source
-- [x] Replace footer with minimal unsubscribe-only plain-text style
-- [x] Remove subscription statement and branding/footer legal text
-- [x] Disable open-tracking pixel image injection
-- [x] Preserve unsubscribe link functionality
-- [x] Preserve click tracking and avoid rewriting unsubscribe URLs
-- [ ] Run targeted tests (`tests/Feature/SingleEmailFeatureTest.php`)
-- [ ] Run full test suite (`php artisan test`)
+- [ ] Add view-email (eye button) action for each sent recipient row in campaign detail report.
+- [ ] Add campaign detail CSV export endpoint and wiring.
+- [ ] Add export button on campaign detail UI.
+- [ ] Add/update feature tests for export and campaign detail UI marker.
+- [ ] Run targeted reports feature tests.
+- [ ] Summarize implementation and readiness for live deploy.

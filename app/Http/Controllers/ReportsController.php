@@ -9,6 +9,7 @@ use App\Models\EmailQueue;
 use App\Models\Unsubscribe;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\View\View;
 
 class ReportsController extends Controller
@@ -256,9 +257,26 @@ class ReportsController extends Controller
             ->distinct('email_clicks.email_queue_id')
             ->count('email_clicks.email_queue_id');
 
-        // Count unsubscribes by matching emails that were sent in this campaign
-        $campaignEmails = EmailQueue::where('campaign_id', $campaignId)->pluck('email');
-        $totalUnsubs = Unsubscribe::whereIn('email', $campaignEmails)->count();
+        // Count unsubscribes by matching emails sent in this campaign,
+        // but only those unsubscribe events that happened on/after the campaign's first send.
+        // This avoids inflating counts with historical unsubscribes from older campaigns.
+        $campaignEmailsQuery = EmailQueue::query()
+            ->where('campaign_id', $campaignId)
+            ->select('email');
+
+        $firstSentAt = EmailQueue::query()
+            ->where('campaign_id', $campaignId)
+            ->where('status', 'sent')
+            ->min('sent_at');
+
+        $totalUnsubsQuery = Unsubscribe::query()
+            ->whereIn('email', $campaignEmailsQuery);
+
+        if (!empty($firstSentAt)) {
+            $totalUnsubsQuery->where('unsubscribed_at', '>=', $firstSentAt);
+        }
+
+        $totalUnsubs = $totalUnsubsQuery->count();
 
         $openRate  = $totalSent > 0 ? round(($totalOpens  / $totalSent) * 100, 2) : 0;
         $clickRate = $totalSent > 0 ? round(($totalClicks / $totalSent) * 100, 2) : 0;
@@ -300,6 +318,75 @@ class ReportsController extends Controller
             'openRate', 'clickRate', 'unsubRate',
             'recipients', 'failedEmails'
         ));
+    }
+
+    public function campaignDetailExport(Request $request, int $campaignId)
+    {
+        $accountId = (int) ($request->user()->account_id ?? 0);
+
+        $campaign = Campaign::where('account_id', $accountId)->findOrFail($campaignId);
+
+        $rows = EmailQueue::query()
+            ->where('campaign_id', $campaignId)
+            ->leftJoin('email_opens', 'email_opens.email_queue_id', '=', 'email_queue.id')
+            ->leftJoin('email_clicks', 'email_clicks.email_queue_id', '=', 'email_queue.id')
+            ->leftJoin('unsubscribes', 'unsubscribes.email', '=', 'email_queue.email')
+            ->selectRaw('
+                email_queue.id,
+                email_queue.email,
+                email_queue.status,
+                email_queue.sent_at,
+                email_queue.last_error,
+                MAX(email_opens.id) as opened_id,
+                MAX(email_clicks.id) as clicked_id,
+                MAX(unsubscribes.id) as unsub_id
+            ')
+            ->groupBy(
+                'email_queue.id',
+                'email_queue.email',
+                'email_queue.status',
+                'email_queue.sent_at',
+                'email_queue.last_error'
+            )
+            ->orderByDesc('email_queue.id')
+            ->get();
+
+        $filename = 'campaign-report-' . $campaign->id . '-' . now()->format('Ymd_His') . '.csv';
+
+        $callback = function () use ($rows): void {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'Queue ID',
+                'Email',
+                'Status',
+                'Sent At',
+                'Opened',
+                'Clicked',
+                'Unsubscribed',
+                'Last Error',
+            ]);
+
+            foreach ($rows as $row) {
+                fputcsv($handle, [
+                    $row->id,
+                    $row->email,
+                    $row->status,
+                    optional($row->sent_at)->toDateTimeString(),
+                    $row->opened_id ? 'Yes' : 'No',
+                    $row->clicked_id ? 'Yes' : 'No',
+                    $row->unsub_id ? 'Yes' : 'No',
+                    $row->last_error ?? '',
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return Response::stream($callback, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     // ── Warmup Report ──────────────────────────────────────────────────────────

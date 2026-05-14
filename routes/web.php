@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/single-email', [ReportsController::class, 'singleEmailReport'])->name('reports.single-email');
     Route::get('/reports/email/{id}', [ReportsController::class, 'showEmail'])->name('reports.email.show');
     Route::get('/reports/campaign/{campaign_id}', [ReportsController::class, 'campaignDetail'])->name('reports.campaign.detail');
+    Route::get('/reports/campaign/{campaign_id}/export', [ReportsController::class, 'campaignDetailExport'])->name('reports.campaign.detail.export');
 
     // Single Email - all roles
     Route::get('/single-email', [SingleEmailController::class, 'create'])->name('single-email.create');

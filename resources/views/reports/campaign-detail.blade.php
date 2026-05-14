@@ -30,6 +30,10 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
+                <a href="{{ route('reports.campaign.detail.export', ['campaign_id' => $campaign->id]) }}"
+                   class="inline-flex items-center px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Export CSV
+                </a>
                 <a href="{{ route('campaigns.edit', $campaign) }}"
                    class="inline-flex items-center px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                     Edit Campaign
@@ -151,6 +155,7 @@
                         <th class="py-2 pr-3 text-center">Opened</th>
                         <th class="py-2 pr-3 text-center">Clicked</th>
                         <th class="py-2 pr-3 text-center">Unsubscribed</th>
+                        <th class="py-2 pr-3 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -181,10 +186,18 @@
                                     <span class="text-slate-300 dark:text-slate-600">—</span>
                                 @endif
                             </td>
+                            <td class="py-2 pr-3 text-center">
+                                <button type="button"
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition js-view-email"
+                                        data-email-id="{{ $row->id }}"
+                                        title="View Email">
+                                    👁
+                                </button>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-500">No sent recipients found.</td>
+                            <td colspan="6" class="py-8 text-center text-slate-500">No sent recipients found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -227,4 +240,79 @@
     @endif
 
 </div>
+
+{{-- Email preview modal --}}
+<div id="emailPreviewModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" data-close-email-modal="1"></div>
+    <div class="relative mx-auto mt-10 w-[95%] max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+            <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Sent Email Preview</h4>
+            <button type="button" class="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" data-close-email-modal="1">✕</button>
+        </div>
+        <div class="p-5 space-y-2 text-sm">
+            <div><span class="font-medium text-slate-600 dark:text-slate-300">To:</span> <span id="previewTo" class="text-slate-800 dark:text-slate-100">—</span></div>
+            <div><span class="font-medium text-slate-600 dark:text-slate-300">Subject:</span> <span id="previewSubject" class="text-slate-800 dark:text-slate-100">—</span></div>
+            <div><span class="font-medium text-slate-600 dark:text-slate-300">From:</span> <span id="previewFrom" class="text-slate-800 dark:text-slate-100">—</span></div>
+            <div class="pt-3">
+                <div class="font-medium text-slate-600 dark:text-slate-300 mb-2">Body</div>
+                <iframe id="previewFrame" class="w-full h-[380px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById('emailPreviewModal');
+    const previewTo = document.getElementById('previewTo');
+    const previewSubject = document.getElementById('previewSubject');
+    const previewFrom = document.getElementById('previewFrom');
+    const previewFrame = document.getElementById('previewFrame');
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    function openModal() {
+        modal.classList.remove('hidden');
+    }
+
+    document.querySelectorAll('.js-view-email').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-email-id');
+            if (!id) return;
+
+            previewTo.textContent = 'Loading...';
+            previewSubject.textContent = 'Loading...';
+            previewFrom.textContent = 'Loading...';
+            previewFrame.srcdoc = '<p style="font-family:Arial,sans-serif;padding:16px;">Loading...</p>';
+            openModal();
+
+            try {
+                const urlTemplate = @json(route('reports.email.show', ['id' => '__ID__']));
+                const res = await fetch(urlTemplate.replace('__ID__', id), {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!res.ok) throw new Error('Failed to load email');
+
+                const data = await res.json();
+                previewTo.textContent = data.to || '—';
+                previewSubject.textContent = data.subject || '—';
+                previewFrom.textContent = [data.from_name, data.from_email].filter(Boolean).join(' <') + (data.from_email ? '>' : '') || '—';
+                previewFrame.srcdoc = data.body_snapshot || '<p style="font-family:Arial,sans-serif;padding:16px;">No body snapshot available.</p>';
+            } catch (e) {
+                previewTo.textContent = 'Error';
+                previewSubject.textContent = 'Error';
+                previewFrom.textContent = 'Error';
+                previewFrame.srcdoc = '<p style="font-family:Arial,sans-serif;padding:16px;color:#b91c1c;">Unable to load email preview.</p>';
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-close-email-modal="1"]').forEach((el) => {
+        el.addEventListener('click', closeModal);
+    });
+})();
+</script>
 @endsection
